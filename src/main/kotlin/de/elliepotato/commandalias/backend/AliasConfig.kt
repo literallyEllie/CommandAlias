@@ -30,8 +30,8 @@ class AliasConfig(dir:File) {
         if(first){
             cfg.set("commands.gamemode.aliases", Arrays.asList("gm", "gamemodepls"))
             cfg.set("commands.gamemode.enabled", true)
-            cfg.set("commands.online.aliases", Collections.singletonList("list"))
-            cfg.set("commands.online.enabled", false)
+            cfg.set("commands.list.aliases", Collections.singletonList("peepsonline"))
+            cfg.set("commands.list.enabled", false)
             save(cfg)
         }
     }
