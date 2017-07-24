@@ -1,7 +1,6 @@
 package de.elliepotato.commandalias.command
 
 import de.elliepotato.commandalias.CommandAlias
-import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -30,6 +29,7 @@ class CmdHandle(val core: CommandAlias): CommandExecutor {
         when (args[0].toLowerCase()) {
             "reload" -> handleReload(sender)
             "toggle" -> handleToggle(sender, args)
+            else -> msg(sender, correctUsage())
         }
 
         return true
@@ -49,15 +49,13 @@ class CmdHandle(val core: CommandAlias): CommandExecutor {
     }
 
     private fun msg(sender: CommandSender, msg: String) {
-        sender.sendMessage(color(core.prefix + msg))
+        sender.sendMessage(core.color(core.prefix + msg))
     }
 
-    private fun color(msg: String): String {
-        return ChatColor.translateAlternateColorCodes('&', msg)
-    }
+
 
     private fun correctUsage(): String {
-        return color("Correct usage: &7/ca <reload | toggle <label>>")
+        return core.color("Correct usage: &7/ca <reload | toggle <label>>")
     }
 
 
