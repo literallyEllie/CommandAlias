@@ -16,11 +16,6 @@ class CmdHandle(val core: CommandAlias): CommandExecutor {
 
         // Commands: /ca reload / toggle
 
-        if (!sender.hasPermission("commandalias.reload")) {
-            msg(sender, "No permission.")
-            return true
-        }
-
         if (args.isEmpty()) {
             msg(sender, correctUsage())
             return true
@@ -36,11 +31,19 @@ class CmdHandle(val core: CommandAlias): CommandExecutor {
     }
 
     fun handleReload(sender: CommandSender) {
+        if (!sender.hasPermission("commandalias.reload")) {
+            msg(sender, "No permission.")
+            return
+        }
         core.reload()
         msg(sender, "Reloaded.")
     }
 
     fun handleToggle(sender: CommandSender, args: Array<out String>){
+        if (!sender.hasPermission("commandalias.toggle")) {
+            msg(sender, "No permission.")
+            return
+        }
         if(args.size != 2) {
             msg(sender, correctUsage())
         }
@@ -51,7 +54,6 @@ class CmdHandle(val core: CommandAlias): CommandExecutor {
     private fun msg(sender: CommandSender, msg: String) {
         sender.sendMessage(core.color(core.prefix + msg))
     }
-
 
 
     private fun correctUsage(): String {
