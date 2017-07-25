@@ -16,7 +16,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group 'de.elliepotato'
-version '1.1.1-RELEASE'
+version '1.1.2-RELEASE'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -54,5 +54,6 @@ shadowJar {
         exclude(dependency("junit:.*:.*"))
         exclude(dependency("org.hamcrest:.*:.*"))
     }
+    relocate 'org.bstats', 'de.elliepotato.commandalias'
     archiveName = "CommandAlias-${version}.jar"
 }
