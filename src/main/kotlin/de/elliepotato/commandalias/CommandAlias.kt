@@ -2,6 +2,7 @@ package de.elliepotato.commandalias
 
 import de.elliepotato.commandalias.backend.AliasConfig
 import de.elliepotato.commandalias.command.CmdHandle
+import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.entity.Player
@@ -63,6 +64,8 @@ class CommandAlias: JavaPlugin() {
 
         }, this)
 
+        val bstats: Metrics = Metrics(this)
+
         log("${commands.size} command aliases were loaded!")
         log("CommandAlias V.${description.version}, by Ellie, has been enabled!")
     }
@@ -83,6 +86,12 @@ class CommandAlias: JavaPlugin() {
 
     fun color(msg: String): String {
         return ChatColor.translateAlternateColorCodes('&', msg)
+    }
+
+    private fun setupBstats(){
+
+
+
     }
 
 }

@@ -51,10 +51,7 @@ class CmdHandle(val core: CommandAlias): CommandExecutor {
         msg(sender, "Toggled '${args[1]}'.")
     }
 
-    private fun msg(sender: CommandSender, msg: String) {
-        sender.sendMessage(core.color(core.prefix + msg))
-    }
-
+    private fun msg(sender: CommandSender, msg: String) = sender.sendMessage(core.color(core.prefix + msg))
 
     private fun correctUsage(): String {
         return core.color("Correct usage: &7/ca <reload | toggle <label>>")

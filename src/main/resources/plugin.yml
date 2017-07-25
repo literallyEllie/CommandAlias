@@ -1,6 +1,6 @@
 name: CommandAlias
 main: de.elliepotato.commandalias.CommandAlias
-version: 1.1-RELEASE
+version: 1.1.1-RELEASE
 author: xEline
 description: Easy, Lightweight plugin for easy command aliases.
 website: www.elliepotato.de
