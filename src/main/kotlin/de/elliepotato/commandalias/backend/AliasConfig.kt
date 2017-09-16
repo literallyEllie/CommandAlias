@@ -1,25 +1,29 @@
 package de.elliepotato.commandalias.backend
 
+import com.google.common.collect.Maps
+import de.elliepotato.commandalias.CommandAlias
+import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.YamlConfiguration
+import org.yaml.snakeyaml.scanner.ScannerException
 import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.function.Consumer
-import kotlin.collections.HashMap
+import java.util.logging.Level
 
 /**
  * Created by Ellie on 23.7.17 for PublicPlugins.
  * Affiliated with www.elliepotato.de
  *
  */
-class AliasConfig(dir:File) {
+class AliasConfig(val core: CommandAlias, dir: File) {
 
-    val file: File = File(dir, "config.yml")
-    var cfg: YamlConfiguration
+    private val file: File = File(dir, "config.yml")
+    private var cfg: YamlConfiguration
 
     init {
 
-        var first: Boolean = false
+        var first = false
 
         if (!file.exists()) {
             if (!file.createNewFile()) throw IOException("Failed to create config.yml!")
@@ -27,66 +31,76 @@ class AliasConfig(dir:File) {
         }
 
         cfg = YamlConfiguration.loadConfiguration(file)
+        if(cfg.getConfigurationSection("commands") == null) first = true
 
         if (first) {
             cfg.set("prefix", "&7[&aCommandAlias&7] &c")
+            cfg.set("noPermission", "{prefix}No permission!")
             cfg.set("commands.gamemode.aliases", Arrays.asList("gm", "gamemodepls"))
             cfg.set("commands.gamemode.enabled", true)
             cfg.set("commands.gamemode.permission", "")
             cfg.set("commands.list.aliases", Collections.singletonList("peepsonline"))
-            cfg.set("commands.list.enabled", "my.custom.permission")
+            cfg.set("commands.list.enabled", true)
+            cfg.set("commands.-msg-wiki.aliases", Collections.singletonList("You can find our wiki at: www.wikipedia.com!"))
+            cfg.set("commands.-msg-wiki.enabled", true)
             save(cfg)
         }
 
-        if(cfg.get("prefix") == null){
+        /* Since 1.1 */
+        if (cfg.get("prefix") == null) {
             cfg.set("prefix", "&7[&aCommandAlias&7] &c")
             save(cfg)
         }
 
+        /* Since 1.1.3 */
+        if (cfg.get("noPermission") == null) {
+            cfg.set("noPermission", "{prefix}No permission!")
+            save(cfg)
+        }
+
     }
 
-    /**
-     * @return A HashMap: key = alias, value = actual command
-     */
-    fun getCommands(): HashMap<String, String> {
-        val cmds: HashMap<String, String> = HashMap()
-        cfg.getConfigurationSection("commands").getKeys(false).forEach(Consumer { t ->
-            val aliases: List<String> = cfg.getStringList("commands.$t.aliases")
-            val enabled: Boolean = cfg.getBoolean("commands.$t.enabled")
+    fun getNewCommands(): HashMap<String, AliasCommand> {
+        val cmds: HashMap<String, AliasCommand> = Maps.newHashMap()
+        try {
+            cfg.getConfigurationSection("commands").getKeys(false).forEach(Consumer { t ->
+                var label: String = t
+                val enabled = cfg.getBoolean("commands.$t.enabled")
 
-            if (enabled) {
-                for (alias in aliases) {
-                    cmds.put(alias.toLowerCase(), t)
+                val permission = cfg.getString("commands.$t.permission")
+                val aliases = cfg.getStringList("commands.$t.aliases")
+                val type: CommandType = CommandType.values().firstOrNull { label.startsWith(it.prefix) }
+                        ?: CommandType.CMD
+                if (type != CommandType.CMD) label = label.split(type.prefix)[1]
+                try {
+                    val command = AliasCommand(label, enabled, permission, aliases, type)
+                    cmds.put(label.toLowerCase(), command)
+                } catch (e: IllegalStateException) {
+                    core.log("The config is improperly defined! Cannot load alias $label.", Level.SEVERE)
+                    core.error = "Failed to set alias instance (${e.message})"
+                    e.printStackTrace()
                 }
-            }
-        })
+            })
+        } catch (e: ScannerException) {
+            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
+            core.error = "Bad config"
+            e.printStackTrace()
+        } catch(e: NullPointerException) {
+            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
+            core.error = "Configuration section 'commands' doesn't exist" // what
+            e.printStackTrace()
+        } catch(e: InvalidConfigurationException) {
+            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
+            core.error = "Bad config"
+            e.printStackTrace()
+        }
+        /* THANK YOU KOTLIN FOR THIS LOVELY DOUBLE CATCH :)) */
         return cmds
     }
 
-    fun getPermissions(): HashMap<String, String> {
-        val perms: HashMap<String, String> = HashMap()
-        var changed:Boolean = false
-        cfg.getConfigurationSection("commands").getKeys(false).forEach(Consumer { t ->
-            if(cfg.get("commands.$t.permission") == null){
-                cfg.set("commands.$t.permission", "") // support for v1.0
-                changed = true
-            }
-            val perm: String = cfg.getString("commands.$t.permission")
-            val enabled: Boolean = cfg.getBoolean("commands.$t.enabled")
+    fun getPrefix(): String = cfg.getString("prefix")
 
-
-
-            if (enabled) {
-                perms.put(t, perm) // index by actual command
-            }
-        })
-        if(changed) save(cfg)
-        return perms
-    }
-
-    fun getPrefix(): String {
-        return cfg.getString("prefix")
-    }
+    fun getNoPerm(): String = cfg.getString("noPermission").replace("{prefix}", getPrefix())
 
     fun save(config: YamlConfiguration) {
         config.save(file)
@@ -96,32 +110,17 @@ class AliasConfig(dir:File) {
         cfg = YamlConfiguration.loadConfiguration(file)
     }
 
-    fun toggleAlias(commands: HashMap<String, String>, label: String) : HashMap<String, String> {
-        if(cfg.get("commands.${label.toLowerCase()}") == null){
-            return commands
-        }
+    /***
+     * @return Pair<HashMap<String, AliasCommand> = The new hashmap, boolean (has the map been modified?)
+     */
+    fun toggleAlias(commands: HashMap<String, AliasCommand>, label: String): Pair<HashMap<String, AliasCommand>, Boolean> {
+        val alias: AliasCommand = commands[label.toLowerCase()] ?: return Pair(commands, false)
 
-        val enabled = cfg.getBoolean("commands.${label.toLowerCase()}.enabled")
-
-        if(enabled) {
-            // Remove it from current map
-            val it = commands.iterator()
-            for (mutableEntry in it) {
-                if (mutableEntry.value == label.toLowerCase()) {
-                    it.remove()
-                }
-            }
-        }else{
-            for (key in cfg.getStringList("commands.${label.toLowerCase()}.aliases")) {
-                commands.put(key.toLowerCase(), label.toLowerCase())
-            }
-        }
-
-        cfg.set("commands.${label.toLowerCase()}.enabled", !enabled)
+        cfg.set("commands.${alias.serialiseLabel().toLowerCase()}.enabled", !alias.enabled)
         save(cfg)
+        alias.enabled = !alias.enabled
 
-        return commands
+        return Pair(commands, true)
     }
-
 
 }

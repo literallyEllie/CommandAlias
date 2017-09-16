@@ -1,6 +1,7 @@
 package de.elliepotato.commandalias.command
 
 import de.elliepotato.commandalias.CommandAlias
+import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -10,11 +11,11 @@ import org.bukkit.command.CommandSender
  * Affiliated with www.elliepotato.de
  *
  */
-class CmdHandle(val core: CommandAlias): CommandExecutor {
+class CmdHandle(private val core: CommandAlias): CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
 
-        // Commands: /ca reload / toggle
+        if (!core.error.isNullOrEmpty()) msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error on start up! Check console. Error description: ${core.error}")
 
         if (args.isEmpty()) {
             msg(sender, correctUsage())
@@ -30,32 +31,44 @@ class CmdHandle(val core: CommandAlias): CommandExecutor {
         return true
     }
 
-    fun handleReload(sender: CommandSender) {
+    private fun handleReload(sender: CommandSender) {
         if (!sender.hasPermission("commandalias.reload")) {
-            msg(sender, "No permission.")
+            msg(sender, core.noPermission)
             return
         }
         core.reload()
+        if (!core.error.isNullOrEmpty()) msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error whilst reloading! Check console. Error description: ${core.error}")
         msg(sender, "Reloaded.")
     }
 
-    fun handleToggle(sender: CommandSender, args: Array<out String>){
+    private fun handleToggle(sender: CommandSender, args: Array<out String>) {
         if (!sender.hasPermission("commandalias.toggle")) {
-            msg(sender, "No permission.")
+            msg(sender, core.noPermission)
             return
         }
-        if(args.size != 2) {
-            msg(sender, correctUsage())
+
+        if (!core.error.isNullOrEmpty()) {
+            msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error on start up so " +
+                    "this sub-command cannot be executed! Check console. Error description: ${core.error}")
+            return // soz
         }
-        core.commands = core.config.toggleAlias(core.commands, args[1])
-        msg(sender, "Toggled '${args[1]}'.")
+
+        if (args.size != 2) {
+            msg(sender, correctUsage())
+            return
+        }
+        val label = args[1]
+
+        val rMap = core.config.toggleAlias(core.newCommands, label)
+        if (!rMap.second) msg(sender, "Couldn't find value of '$label'.")
+        else {
+            core.newCommands = rMap.first
+            msg(sender, "Toggled '$label'.")
+        }
     }
 
     private fun msg(sender: CommandSender, msg: String) = sender.sendMessage(core.color(core.prefix + msg))
 
-    private fun correctUsage(): String {
-        return core.color("Correct usage: &7/ca <reload | toggle <label>>")
-    }
-
+    private fun correctUsage(): String = "Correct usage: ${ChatColor.GRAY}/ca <reload | toggle <label>>"
 
 }

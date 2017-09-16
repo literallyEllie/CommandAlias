@@ -1,6 +1,8 @@
 package de.elliepotato.commandalias
 
+import de.elliepotato.commandalias.backend.AliasCommand
 import de.elliepotato.commandalias.backend.AliasConfig
+import de.elliepotato.commandalias.backend.CommandType
 import de.elliepotato.commandalias.command.CmdHandle
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
@@ -11,9 +13,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
 import org.bukkit.plugin.java.JavaPlugin
-import java.util.*
 import java.util.logging.Level
-
 
 
 /**
@@ -24,18 +24,21 @@ import java.util.logging.Level
 class CommandAlias: JavaPlugin() {
 
     lateinit var config: AliasConfig
-    lateinit var commands: HashMap<String, String>      // who needs OOP right?
-    lateinit var permissions: HashMap<String, String>
+
+    lateinit var newCommands: HashMap<String, AliasCommand>
+
     lateinit var prefix: String
+    lateinit var noPermission: String
+    var error: String? = null
 
     override fun onEnable() {
 
         if (!dataFolder.exists()) dataFolder.mkdirs()
 
-        config = AliasConfig(dataFolder)
-        commands = config.getCommands()
-        permissions = config.getPermissions()
+        config = AliasConfig(this, dataFolder)
+        newCommands = config.getNewCommands()
         prefix = config.getPrefix()
+        noPermission = config.getNoPerm()
 
         getCommand("ca").executor = CmdHandle(this)
 
@@ -49,49 +52,43 @@ class CommandAlias: JavaPlugin() {
                 val argOne = message.split(" ")[0]
                 val commandArgs = message.substring(argOne.length)
 
-                for ((key, toEx) in commands) {
-                    if (argOne.toLowerCase() == key) {
-                        e.isCancelled = true
-                        val perm: String? = permissions[toEx]
-                        if(perm.isNullOrBlank() || player.hasPermission(perm)) {
-                            server.dispatchCommand(player, toEx + commandArgs) // This avoids dupe command registers in console +
-                            // potential chat filters (command spam)
-                        }else player.sendMessage(color(prefix+"No permission."))
-                        break // Stop command dupes
-                    }
+                for ((key, toEx) in newCommands) {
+                    if (!toEx.enabled || (key != argOne && !toEx.aliases.contains(argOne))) continue
+                    e.isCancelled = true
+                    if (toEx.permission.isNullOrEmpty() || player.hasPermission(toEx.permission)) {
+
+                        when(toEx.type) {
+                            CommandType.MSG -> player.sendMessage(color(toEx.aliases[0]))
+                            CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}$commandArgs") // kotlin lost it when i used a + operator??
+                        }
+
+                    } else player.sendMessage(color(noPermission))
+                    break
                 }
             }
 
         }, this)
 
-        val bstats: Metrics = Metrics(this)
+        Metrics(this)
 
-        log("${commands.size} command aliases were loaded!")
+        log("${newCommands.size} command aliases were loaded!")
         log("CommandAlias V.${description.version}, by Ellie, has been enabled!")
     }
 
     override fun onDisable() {
-        commands.clear()
-        permissions.clear()
+        newCommands.clear()
         log("CommandAlias V.${description.version}, by Ellie, has been disabled!")
     }
 
     fun log(message: String, level: Level = Level.INFO) = logger.log(level, message)
 
     fun reload() {
+        error = null
         config.reload()
-        commands = config.getCommands()
-        permissions = config.getPermissions()
+        newCommands = config.getNewCommands()
+        log("${newCommands.size} command aliases were loaded!")
     }
 
-    fun color(msg: String): String {
-        return ChatColor.translateAlternateColorCodes('&', msg)
-    }
-
-    private fun setupBstats(){
-
-
-
-    }
+    fun color(msg: String): String = ChatColor.translateAlternateColorCodes('&', msg)
 
 }
