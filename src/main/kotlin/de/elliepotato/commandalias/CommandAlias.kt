@@ -1,9 +1,13 @@
 package de.elliepotato.commandalias
 
+import com.google.common.collect.Sets
 import de.elliepotato.commandalias.backend.AliasCommand
 import de.elliepotato.commandalias.backend.AliasConfig
 import de.elliepotato.commandalias.backend.CommandType
 import de.elliepotato.commandalias.command.CmdHandle
+import de.elliepotato.commandalias.hook.CAHook
+import de.elliepotato.commandalias.hook.DefaultPlaceholders
+import de.elliepotato.commandalias.hook.HookPlaceholderAPI
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
@@ -16,7 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.util.logging.Level
 
 /**
- * Created by Ellie on 27/07/2017 for PublicPlugins.
+ * Created by Ellie on 27/07/2017 for CommandAlias.
  *
  *    Copyright 2017 Ellie
  *
@@ -32,11 +36,12 @@ import java.util.logging.Level
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-class CommandAlias: JavaPlugin() {
+class CommandAlias : JavaPlugin() {
 
     lateinit var config: AliasConfig
 
     lateinit var newCommands: HashMap<String, AliasCommand>
+    lateinit var hookProcessors: MutableSet<CAHook>
 
     lateinit var prefix: String
     lateinit var noPermission: String
@@ -50,13 +55,15 @@ class CommandAlias: JavaPlugin() {
         newCommands = config.getNewCommands()
         prefix = config.getPrefix()
         noPermission = config.getNoPerm()
+        hookProcessors = Sets.newHashSet()
+        softDependencyRegister()
 
         getCommand("ca").executor = CmdHandle(this)
 
         Bukkit.getPluginManager().registerEvents(object : Listener {
 
             @EventHandler(priority = EventPriority.LOW)
-            fun onCommandPreProcess(e: PlayerCommandPreprocessEvent) {
+            fun on(e: PlayerCommandPreprocessEvent) {
                 val player: Player = e.player
                 val message: String = e.message.replaceFirst("/", "")
 
@@ -68,9 +75,9 @@ class CommandAlias: JavaPlugin() {
                     e.isCancelled = true
                     if (toEx.permission.isNullOrEmpty() || player.hasPermission(toEx.permission)) {
 
-                        when(toEx.type) {
-                            CommandType.MSG -> player.sendMessage(color(toEx.aliases[0]))
-                            CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}$commandArgs") // kotlin lost it when i used a + operator??
+                        when (toEx.type) {
+                            CommandType.MSG -> player.sendMessage(color(processString(toEx.aliases[0], player)))
+                            CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}${processString(commandArgs, player)}")
                         }
 
                     } else player.sendMessage(color(noPermission))
@@ -88,6 +95,7 @@ class CommandAlias: JavaPlugin() {
 
     override fun onDisable() {
         newCommands.clear()
+        hookProcessors.clear()
         log("CommandAlias V.${description.version}, by Ellie, has been disabled!")
     }
 
@@ -97,9 +105,26 @@ class CommandAlias: JavaPlugin() {
         error = null
         config.reload()
         newCommands = config.getNewCommands()
+        hookProcessors.clear()
+        softDependencyRegister()
         log("${newCommands.size} command aliases were loaded!")
     }
 
     fun color(msg: String): String = ChatColor.translateAlternateColorCodes('&', msg)
+
+    private fun softDependencyRegister() {
+        if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) {
+            log("PlaceholderAPI found! Utilizing...")
+            hookProcessors.add(HookPlaceholderAPI())
+        } else hookProcessors.add(DefaultPlaceholders()) // %name% and %display_name%
+    }
+
+    fun processString(message: String, sender: Player): String {
+        var newMsg = message
+        for (hookProcessor in hookProcessors) {
+            newMsg = hookProcessor.process(newMsg, sender)
+        }
+        return newMsg
+    }
 
 }

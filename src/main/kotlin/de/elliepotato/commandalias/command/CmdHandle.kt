@@ -23,7 +23,7 @@ import org.bukkit.command.CommandSender
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-class CmdHandle(private val core: CommandAlias): CommandExecutor {
+class CmdHandle(private val core: CommandAlias) : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
 
@@ -44,20 +44,17 @@ class CmdHandle(private val core: CommandAlias): CommandExecutor {
     }
 
     private fun handleReload(sender: CommandSender) {
-        if (!sender.hasPermission("commandalias.reload")) {
-            msg(sender, core.noPermission)
-            return
-        }
+        if (!sender.hasPermission("commandalias.reload"))
+            return msg(sender, core.noPermission)
+
         core.reload()
         if (!core.error.isNullOrEmpty()) msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error whilst reloading! Check console. Error description: ${core.error}")
         msg(sender, "Reloaded.")
     }
 
     private fun handleToggle(sender: CommandSender, args: Array<out String>) {
-        if (!sender.hasPermission("commandalias.toggle")) {
-            msg(sender, core.noPermission)
-            return
-        }
+        if (!sender.hasPermission("commandalias.toggle"))
+            return msg(sender, core.noPermission)
 
         if (!core.error.isNullOrEmpty()) {
             msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error on start up so " +
