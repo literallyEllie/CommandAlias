@@ -1,7 +1,7 @@
 package de.elliepotato.commandalias.backend
 
 /**
- * Created by Ellie on 16/09/2017 for PublicPlugins.
+ * Created by Ellie on 16/09/2017 for CommandAlias.
  *
  *    Copyright 2017 Ellie
  *

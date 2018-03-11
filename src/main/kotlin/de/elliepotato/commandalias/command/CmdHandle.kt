@@ -7,11 +7,23 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 
 /**
- * Created by Ellie on 23.7.17 for PublicPlugins.
- * Affiliated with www.elliepotato.de
+ * Created by Ellie on 27/07/2017 for PublicPlugins.
  *
+ *    Copyright 2017 Ellie
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
-class CmdHandle(private val core: CommandAlias): CommandExecutor {
+class CmdHandle(private val core: CommandAlias) : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
 
@@ -32,20 +44,17 @@ class CmdHandle(private val core: CommandAlias): CommandExecutor {
     }
 
     private fun handleReload(sender: CommandSender) {
-        if (!sender.hasPermission("commandalias.reload")) {
-            msg(sender, core.noPermission)
-            return
-        }
+        if (!sender.hasPermission("commandalias.reload"))
+            return msg(sender, core.noPermission)
+
         core.reload()
         if (!core.error.isNullOrEmpty()) msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error whilst reloading! Check console. Error description: ${core.error}")
         msg(sender, "Reloaded.")
     }
 
     private fun handleToggle(sender: CommandSender, args: Array<out String>) {
-        if (!sender.hasPermission("commandalias.toggle")) {
-            msg(sender, core.noPermission)
-            return
-        }
+        if (!sender.hasPermission("commandalias.toggle"))
+            return msg(sender, core.noPermission)
 
         if (!core.error.isNullOrEmpty()) {
             msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error on start up so " +

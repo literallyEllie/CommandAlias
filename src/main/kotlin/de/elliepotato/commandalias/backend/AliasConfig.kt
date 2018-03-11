@@ -12,9 +12,21 @@ import java.util.function.Consumer
 import java.util.logging.Level
 
 /**
- * Created by Ellie on 23.7.17 for PublicPlugins.
- * Affiliated with www.elliepotato.de
+ * Created by Ellie on 23/07/2017 for CommandAlias.
  *
+ *    Copyright 2017 Ellie
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  */
 class AliasConfig(val core: CommandAlias, dir: File) {
 
@@ -31,7 +43,7 @@ class AliasConfig(val core: CommandAlias, dir: File) {
         }
 
         cfg = YamlConfiguration.loadConfiguration(file)
-        if(cfg.getConfigurationSection("commands") == null) first = true
+        if (cfg.getConfigurationSection("commands") == null) first = true
 
         if (first) {
             cfg.set("prefix", "&7[&aCommandAlias&7] &c")
@@ -60,6 +72,16 @@ class AliasConfig(val core: CommandAlias, dir: File) {
 
     }
 
+    /***
+     *
+     * Get a new instance of commands
+     *
+     * @return a list of commands fed from the configuration file
+     * @throws IllegalStateException If a configuration value of a alias is null
+     * @throws ScannerException By the YAML parser if the config is invalid.
+     * @throws InvalidConfigurationException By the YAML parser if the config is invalid.
+     * @throws NullPointerException If the configuration section "commands" doesn't exist
+     */
     fun getNewCommands(): HashMap<String, AliasCommand> {
         val cmds: HashMap<String, AliasCommand> = Maps.newHashMap()
         try {
@@ -85,13 +107,13 @@ class AliasConfig(val core: CommandAlias, dir: File) {
             core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
             core.error = "Bad config"
             e.printStackTrace()
-        } catch(e: NullPointerException) {
-            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
-            core.error = "Configuration section 'commands' doesn't exist" // what
-            e.printStackTrace()
-        } catch(e: InvalidConfigurationException) {
+        } catch (e: InvalidConfigurationException) {
             core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
             core.error = "Bad config"
+            e.printStackTrace()
+        } catch (e: NullPointerException) {
+            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
+            core.error = "Configuration section 'commands' doesn't exist" // what
             e.printStackTrace()
         }
         /* THANK YOU KOTLIN FOR THIS LOVELY DOUBLE CATCH :)) */
