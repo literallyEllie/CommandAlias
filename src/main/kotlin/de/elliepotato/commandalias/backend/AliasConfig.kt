@@ -28,23 +28,26 @@ import java.util.logging.Level
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-class AliasConfig(val core: CommandAlias, dir: File) {
+class AliasConfig(private val core: CommandAlias, dir: File) {
 
     private val file: File = File(dir, "config.yml")
     private var cfg: YamlConfiguration
 
     init {
 
-        var first = false
-
         if (!file.exists()) {
-            if (!file.createNewFile()) throw IOException("Failed to create config.yml!")
-            first = true
+            // if (!file.createNewFile()) throw IOException("Failed to create config.yml!")
+            core.saveResource("config.yml", false)
         }
 
         cfg = YamlConfiguration.loadConfiguration(file)
-        if (cfg.getConfigurationSection("commands") == null) first = true
 
+        if (!cfg.isConfigurationSection("commands")) {
+            cfg.createSection("commands")
+            save(cfg)
+        }
+
+        /* Since 1.3.1
         if (first) {
             cfg.set("prefix", "&7[&aCommandAlias&7] &c")
             cfg.set("noPermission", "{prefix}No permission!")
@@ -57,6 +60,7 @@ class AliasConfig(val core: CommandAlias, dir: File) {
             cfg.set("commands.-msg-wiki.enabled", true)
             save(cfg)
         }
+        */
 
         /* Since 1.1 */
         if (cfg.get("prefix") == null) {
@@ -83,7 +87,7 @@ class AliasConfig(val core: CommandAlias, dir: File) {
      * @throws NullPointerException If the configuration section "commands" doesn't exist
      */
     fun getNewCommands(): HashMap<String, AliasCommand> {
-        val cmds: HashMap<String, AliasCommand> = Maps.newHashMap()
+        val commands: HashMap<String, AliasCommand> = Maps.newHashMap()
         try {
             cfg.getConfigurationSection("commands").getKeys(false).forEach(Consumer { t ->
                 var label: String = t
@@ -96,7 +100,7 @@ class AliasConfig(val core: CommandAlias, dir: File) {
                 if (type != CommandType.CMD) label = label.split(type.prefix)[1]
                 try {
                     val command = AliasCommand(label, enabled, permission, aliases, type)
-                    cmds.put(label.toLowerCase(), command)
+                    commands[label.toLowerCase()] = command
                 } catch (e: IllegalStateException) {
                     core.log("The config is improperly defined! Cannot load alias $label.", Level.SEVERE)
                     core.error = "Failed to set alias instance (${e.message})"
@@ -116,8 +120,8 @@ class AliasConfig(val core: CommandAlias, dir: File) {
             core.error = "Configuration section 'commands' doesn't exist" // what
             e.printStackTrace()
         }
-        /* THANK YOU KOTLIN FOR THIS LOVELY DOUBLE CATCH :)) */
-        return cmds
+        /* THANK YOU KOTLIN FOR THIS LOVELY TRIPLE CATCH :)) */
+        return commands
     }
 
     fun getPrefix(): String = cfg.getString("prefix")
@@ -133,7 +137,7 @@ class AliasConfig(val core: CommandAlias, dir: File) {
     }
 
     /***
-     * @return Pair<HashMap<String, AliasCommand> = The new hashmap, boolean (has the map been modified?)
+     * @return Pair<HashMap<String, AliasCommand> = The new HashMap, boolean (has the map been modified?)
      */
     fun toggleAlias(commands: HashMap<String, AliasCommand>, label: String): Pair<HashMap<String, AliasCommand>, Boolean> {
         val alias: AliasCommand = commands[label.toLowerCase()] ?: return Pair(commands, false)

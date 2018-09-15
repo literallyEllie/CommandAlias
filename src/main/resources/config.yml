@@ -1,0 +1,33 @@
+# Welcome to the CommandAlias config! It is very pretty now.
+# For support see https://www.spigotmc.org/resources/commandalias.44362/ or add me Ellie#0006
+# MAKE SURE YOU VALIDATE THE CONFIG BEFORE SAVING http://www.yamllint.com
+#
+# This plugin supports PlaceHolderAPI but there are some native placeholders too:
+# %name% - Name of the person doing the command
+# %display_name% - Display-name of the person doing the command.
+
+# The prefix that will show before /ca
+prefix: '&7[&aCommandAlias&7] &c'
+# No permsision message.
+noPermission: '{prefix}No permission!'
+# Create a command here.
+commands:
+  # The actual command you would need to run.
+  gamemode:
+    # What you want it to be accessable by.
+    aliases:
+    - gm
+    - gamemodepls
+    # You can disable it (also in game)
+    enabled: true
+    # Permission required to use this aliases (could also be used for custom no perm messages)
+    permission: ''
+  list:
+    aliases:
+    - peepsonline
+    enabled: true
+  # The "-msg-" prefix sends them a message with this command. So when you do /wiki, the message below will show. It will only send the first message in the list.
+  -msg-wiki:
+    aliases:
+    - 'You can find our wiki at: www.wikipedia.com!'
+    enabled: true

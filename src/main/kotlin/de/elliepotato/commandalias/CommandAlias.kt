@@ -116,7 +116,8 @@ class CommandAlias : JavaPlugin() {
         if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) {
             log("PlaceholderAPI found! Utilizing...")
             hookProcessors.add(HookPlaceholderAPI())
-        } else hookProcessors.add(DefaultPlaceholders()) // %name% and %display_name%
+        }
+        hookProcessors.add(DefaultPlaceholders()) // %name% and %display_name%
     }
 
     fun processString(message: String, sender: Player): String {
