@@ -16,6 +16,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
+import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.util.logging.Level
 
@@ -47,6 +48,11 @@ class CommandAlias : JavaPlugin() {
     lateinit var noPermission: String
     var error: String? = null
 
+    var updateMeMessage: String? = null
+    set(value) {
+        field = "$value You can download a new version at https://www.spigotmc.org/resources/commandalias.44362/"
+    }
+
     override fun onEnable() {
 
         if (!dataFolder.exists()) dataFolder.mkdirs()
@@ -58,9 +64,19 @@ class CommandAlias : JavaPlugin() {
         hookProcessors = Sets.newHashSet()
         softDependencyRegister()
 
-        getCommand("ca").executor = CmdHandle(this)
+        getCommand("ca")!!.setExecutor(CmdHandle(this))
 
         Bukkit.getPluginManager().registerEvents(object : Listener {
+
+            @EventHandler
+            fun on(e: PlayerJoinEvent) {
+                if (!config.isVersionChecking() || updateMeMessage == null) return
+
+                val player = e.player
+                if (!player.hasPermission("commandalias.reload")) return
+
+                player.sendMessage("${config.getPrefix()} $updateMeMessage")
+            }
 
             @EventHandler(priority = EventPriority.LOW)
             fun on(e: PlayerCommandPreprocessEvent) {
@@ -81,7 +97,7 @@ class CommandAlias : JavaPlugin() {
                         }
 
                     } else player.sendMessage(color(noPermission))
-                    break
+                    if (config.isBreakAfterAliasMatch()) break
                 }
             }
 

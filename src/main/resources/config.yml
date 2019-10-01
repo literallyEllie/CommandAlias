@@ -10,11 +10,20 @@
 prefix: '&7[&aCommandAlias&7] &c'
 # No permsision message.
 noPermission: '{prefix}No permission!'
+
+# Keep your server and the plugin up to date. Will run every time the server restarts.
+check-version: true
+
+advanced:
+  # Should it keep iterating through commands when it finds a match?
+  # Enabling this can be useful if you have one alias doing multiple things.
+  keep-iterating-when-match: false
+
 # Create a command here.
 commands:
   # The actual command you would need to run.
   gamemode:
-    # What you want it to be accessable by.
+    # What you want it to be accessible by.
     aliases:
     - gm
     - gamemodepls

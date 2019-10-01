@@ -1,6 +1,7 @@
 package de.elliepotato.commandalias.backend
 
 import com.google.common.collect.Maps
+import com.sun.org.apache.xpath.internal.operations.Bool
 import de.elliepotato.commandalias.CommandAlias
 import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.YamlConfiguration
@@ -74,6 +75,17 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
             save(cfg)
         }
 
+        /* Since 1.3.2 */
+        if (cfg.get("advanced.keep-iterating-when-match") == null) {
+            cfg.set("advanced.keep-iterating-when-match", false);
+            save(cfg)
+        }
+
+        if (cfg.get("check-version") == null) {
+            cfg.set("check-version", true)
+            save(cfg)
+        }
+
     }
 
     /***
@@ -89,7 +101,7 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
     fun getNewCommands(): HashMap<String, AliasCommand> {
         val commands: HashMap<String, AliasCommand> = Maps.newHashMap()
         try {
-            cfg.getConfigurationSection("commands").getKeys(false).forEach(Consumer { t ->
+            cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { t ->
                 var label: String = t
                 val enabled = cfg.getBoolean("commands.$t.enabled")
 
@@ -124,9 +136,13 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
         return commands
     }
 
-    fun getPrefix(): String = cfg.getString("prefix")
+    fun getPrefix(): String = cfg.getString("prefix")!!
 
-    fun getNoPerm(): String = cfg.getString("noPermission").replace("{prefix}", getPrefix())
+    fun getNoPerm(): String = cfg.getString("noPermission")!!.replace("{prefix}", getPrefix())
+
+    fun isVersionChecking(): Boolean = cfg.getBoolean("version-check", true)
+
+    fun isBreakAfterAliasMatch(): Boolean = !cfg.getBoolean("advanced.keep-iterating-when-match", false)
 
     fun save(config: YamlConfiguration) {
         config.save(file)
