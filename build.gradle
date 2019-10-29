@@ -37,7 +37,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile group: 'org.bstats', name: 'bstats-bukkit', version: '1.5'
     // Provided dependencies
-    compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.14.4-R0.1-SNAPSHOT'z
+    compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.14.4-R0.1-SNAPSHOT'
     // Soft dependencies
     compileOnly group: 'me.clip', name: 'placeholderapi', version: '2.9.2'
 }

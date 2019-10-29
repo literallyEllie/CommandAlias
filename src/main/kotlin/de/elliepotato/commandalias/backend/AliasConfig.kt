@@ -81,10 +81,12 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
             save(cfg)
         }
 
+        /* Sike
         if (cfg.get("check-version") == null) {
             cfg.set("check-version", true)
             save(cfg)
         }
+         */
 
     }
 

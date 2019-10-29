@@ -8,8 +8,11 @@
 
 # The prefix that will show before /ca
 prefix: '&7[&aCommandAlias&7] &c'
-# No permission message.
+# No permsision message.
 noPermission: '{prefix}No permission!'
+
+# Keep your server and the plugin up to date. Will run every time the server restarts.
+check-version: true
 
 advanced:
   # Should it keep iterating through commands when it finds a match?
@@ -28,21 +31,9 @@ commands:
     enabled: true
     # Permission required to use this aliases (could also be used for custom no perm messages)
     permission: ''
-  god:
-    aliases:
-      - buff
-    enabled: true
-  fly:
-    aliases:
-      - buff
-    enabled: true
-  flyspeed 5:
-    aliases:
-      - buff
-    enabled: true
   list:
     aliases:
-      - peepsonline
+    - peepsonline
     enabled: true
   # The "-msg-" prefix sends them a message with this command. So when you do /wiki, the message below will show. It will only send the first message in the list.
   -msg-wiki:

@@ -43,7 +43,6 @@ class VersionChecker(commandAlias: CommandAlias) {
         private val PLUGIN_ID = "command-alias"
     }
 
-
     private val gson = GsonBuilder()
             .excludeFieldsWithoutExposeAnnotation()
             .create()
