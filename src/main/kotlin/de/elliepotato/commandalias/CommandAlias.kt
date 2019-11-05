@@ -96,7 +96,8 @@ class CommandAlias : JavaPlugin() {
                             CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}${processString(commandArgs, player)}")
                         }
 
-                    } else player.sendMessage(color(noPermission))
+                    } else if (noPermission.isNotEmpty())
+                        player.sendMessage(color(noPermission))
                     if (config.isBreakAfterAliasMatch()) break
                 }
             }
