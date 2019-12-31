@@ -4,6 +4,7 @@ import com.google.common.collect.Sets
 import de.elliepotato.commandalias.backend.AliasCommand
 import de.elliepotato.commandalias.backend.AliasConfig
 import de.elliepotato.commandalias.backend.CommandType
+import de.elliepotato.commandalias.bungee.BungeeConnector
 import de.elliepotato.commandalias.command.CmdHandle
 import de.elliepotato.commandalias.hook.CAHook
 import de.elliepotato.commandalias.hook.DefaultPlaceholders
@@ -41,28 +42,29 @@ class CommandAlias : JavaPlugin() {
 
     lateinit var config: AliasConfig
 
-    lateinit var newCommands: HashMap<String, AliasCommand>
+    lateinit var commands: HashMap<String, AliasCommand>
     lateinit var hookProcessors: MutableSet<CAHook>
+    lateinit var bungeeConnector: BungeeConnector
 
     lateinit var prefix: String
     lateinit var noPermission: String
     var error: String? = null
 
     var updateMeMessage: String? = null
-    set(value) {
-        field = "$value You can download a new version at https://www.spigotmc.org/resources/commandalias.44362/"
-    }
+        set(value) {
+            field = "$value You can download a new version at https://www.spigotmc.org/resources/commandalias.44362/"
+        }
 
     override fun onEnable() {
-
         if (!dataFolder.exists()) dataFolder.mkdirs()
 
         config = AliasConfig(this, dataFolder)
-        newCommands = config.getNewCommands()
+        commands = config.getCommands()
         prefix = config.getPrefix()
         noPermission = config.getNoPerm()
         hookProcessors = Sets.newHashSet()
         softDependencyRegister()
+        bungeeConnector = BungeeConnector(this)
 
         getCommand("ca")!!.setExecutor(CmdHandle(this))
 
@@ -86,13 +88,15 @@ class CommandAlias : JavaPlugin() {
                 val argOne = message.split(" ")[0]
                 val commandArgs = message.substring(argOne.length)
 
-                for ((key, toEx) in newCommands) {
+                for ((key, toEx) in commands) {
+                    // if not enabled or
                     if (!toEx.enabled || (key != argOne && !toEx.aliases.contains(argOne))) continue
                     e.isCancelled = true
                     if (toEx.permission.isNullOrEmpty() || player.hasPermission(toEx.permission)) {
 
                         when (toEx.type) {
                             CommandType.MSG -> player.sendMessage(color(processString(toEx.aliases[0], player)))
+                            CommandType.SERVER -> bungeeConnector.sendServer(player, key)
                             CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}${processString(commandArgs, player)}")
                         }
 
@@ -106,12 +110,12 @@ class CommandAlias : JavaPlugin() {
 
         Metrics(this)
 
-        log("${newCommands.size} command aliases were loaded!")
+        log("${commands.size} command aliases were loaded!")
         log("CommandAlias V.${description.version}, by Ellie, has been enabled!")
     }
 
     override fun onDisable() {
-        newCommands.clear()
+        commands.clear()
         hookProcessors.clear()
         log("CommandAlias V.${description.version}, by Ellie, has been disabled!")
     }
@@ -121,10 +125,10 @@ class CommandAlias : JavaPlugin() {
     fun reload() {
         error = null
         config.reload()
-        newCommands = config.getNewCommands()
+        commands = config.getCommands()
         hookProcessors.clear()
         softDependencyRegister()
-        log("${newCommands.size} command aliases were loaded!")
+        log("${commands.size} command aliases were loaded!")
     }
 
     fun color(msg: String): String = ChatColor.translateAlternateColorCodes('&', msg)

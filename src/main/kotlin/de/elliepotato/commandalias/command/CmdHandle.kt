@@ -68,10 +68,10 @@ class CmdHandle(private val core: CommandAlias) : CommandExecutor {
         }
         val label = args[1]
 
-        val rMap = core.config.toggleAlias(core.newCommands, label)
+        val rMap = core.config.toggleAlias(core.commands, label)
         if (!rMap.second) msg(sender, "Couldn't find value of '$label'.")
         else {
-            core.newCommands = rMap.first
+            core.commands = rMap.first
             msg(sender, "Toggled '$label'.")
         }
     }

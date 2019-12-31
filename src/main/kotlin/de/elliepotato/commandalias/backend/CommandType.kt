@@ -20,6 +20,7 @@ package de.elliepotato.commandalias.backend
 enum class CommandType(val prefix: String) {
 
     MSG("-msg-"),
+    SERVER("-server-"),
     CMD(""), /* at the bottom so others can get matched first */
 
     ;

@@ -1,13 +1,11 @@
 package de.elliepotato.commandalias.backend
 
 import com.google.common.collect.Maps
-import com.sun.org.apache.xpath.internal.operations.Bool
 import de.elliepotato.commandalias.CommandAlias
 import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.YamlConfiguration
 import org.yaml.snakeyaml.scanner.ScannerException
 import java.io.File
-import java.io.IOException
 import java.util.*
 import java.util.function.Consumer
 import java.util.logging.Level
@@ -100,7 +98,7 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
      * @throws InvalidConfigurationException By the YAML parser if the config is invalid.
      * @throws NullPointerException If the configuration section "commands" doesn't exist
      */
-    fun getNewCommands(): HashMap<String, AliasCommand> {
+    fun getCommands(): HashMap<String, AliasCommand> {
         val commands: HashMap<String, AliasCommand> = Maps.newHashMap()
         try {
             cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { t ->

@@ -22,30 +22,23 @@ commands:
   gamemode:
     # What you want it to be accessible by.
     aliases:
-    - gm
-    - gamemodepls
+      - gm
+      - gamemodepls
     # You can disable it (also in game)
     enabled: true
     # Permission required to use this aliases (could also be used for custom no perm messages)
     permission: ''
-  god:
-    aliases:
-      - buff
-    enabled: true
-  fly:
-    aliases:
-      - buff
-    enabled: true
-  flyspeed 5:
-    aliases:
-      - buff
-    enabled: true
   list:
     aliases:
       - peepsonline
     enabled: true
+  # The "-server-" prefix sends them to the Bungee server, if possible.
+  -server-hub:
+    aliases:
+      - lobby
+    enabled: true
   # The "-msg-" prefix sends them a message with this command. So when you do /wiki, the message below will show. It will only send the first message in the list.
   -msg-wiki:
     aliases:
-    - 'You can find our wiki at: www.wikipedia.com!'
+      - 'You can find our wiki at: www.wikipedia.com!'
     enabled: true
