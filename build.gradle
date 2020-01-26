@@ -16,7 +16,7 @@ plugins {
 apply plugin: 'kotlin'
 
 group 'de.elliepotato'
-version '1.4-RELEASE'
+version '1.4.1-RELEASE'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -35,11 +35,11 @@ repositories {
 dependencies {
     // Environment
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    compile group: 'org.bstats', name: 'bstats-bukkit', version: '1.5'
+    compile group: 'org.bstats', name: 'bstats-bukkit', version: '1.7'
     // Provided dependencies
-    compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.14.4-R0.1-SNAPSHOT'
+    compileOnly group: 'org.spigotmc', name: 'spigot-api', version: '1.15.2-R0.1-SNAPSHOT'
     // Soft dependencies
-    compileOnly group: 'me.clip', name: 'placeholderapi', version: '2.9.2'
+    compileOnly group: 'me.clip', name: 'placeholderapi', version: '2.10.4'
 }
 
 compileKotlin {

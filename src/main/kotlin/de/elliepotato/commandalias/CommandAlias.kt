@@ -95,7 +95,7 @@ class CommandAlias : JavaPlugin() {
                     if (toEx.permission.isNullOrEmpty() || player.hasPermission(toEx.permission)) {
 
                         when (toEx.type) {
-                            CommandType.MSG -> player.sendMessage(color(processString(toEx.aliases[0], player)))
+                            CommandType.MSG -> toEx.aliases.forEach { m -> player.sendMessage(processString(m, player)) }
                             CommandType.SERVER -> bungeeConnector.sendServer(player, key)
                             CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}${processString(commandArgs, player)}")
                         }
@@ -108,7 +108,7 @@ class CommandAlias : JavaPlugin() {
 
         }, this)
 
-        Metrics(this)
+        Metrics(this, 1242)
 
         log("${commands.size} command aliases were loaded!")
         log("CommandAlias V.${description.version}, by Ellie, has been enabled!")

@@ -2,6 +2,7 @@ package de.elliepotato.commandalias.backend
 
 import com.google.common.collect.Maps
 import de.elliepotato.commandalias.CommandAlias
+import org.bukkit.ChatColor
 import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.YamlConfiguration
 import org.yaml.snakeyaml.scanner.ScannerException
@@ -9,6 +10,7 @@ import java.io.File
 import java.util.*
 import java.util.function.Consumer
 import java.util.logging.Level
+import java.util.stream.Collectors
 
 /**
  * Created by Ellie on 23/07/2017 for CommandAlias.
@@ -106,7 +108,10 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
                 val enabled = cfg.getBoolean("commands.$t.enabled")
 
                 val permission = cfg.getString("commands.$t.permission")
-                val aliases = cfg.getStringList("commands.$t.aliases")
+                // color now, save later
+                val aliases = cfg.getStringList("commands.$t.aliases").stream()
+                        .map { m -> ChatColor.translateAlternateColorCodes('&', m) }
+                        .collect(Collectors.toList())
                 val type: CommandType = CommandType.values().firstOrNull { label.startsWith(it.prefix) }
                         ?: CommandType.CMD
                 if (type != CommandType.CMD) label = label.split(type.prefix)[1]
