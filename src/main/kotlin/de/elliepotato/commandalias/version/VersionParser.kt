@@ -1,4 +1,4 @@
-package de.elliepotato.sleepy.version
+package de.elliepotato.commandalias.version
 
 import de.elliepotato.commandalias.util.NumberTools
 import org.apache.commons.lang.StringUtils

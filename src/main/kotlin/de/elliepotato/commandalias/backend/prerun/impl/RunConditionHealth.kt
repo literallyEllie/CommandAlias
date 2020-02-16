@@ -28,9 +28,9 @@ class RunConditionHealth : RunCondition {
     }
 
     override fun meetsConditions(alias: AliasCommand, args: List<String>, player: Player): Boolean {
-        player.sendMessage(player.health.toString())
         return when (val any = alias.runConditions[getId()]) {
-            is Int, Double -> player.health == any
+            is Double -> player.health == any
+            is Int -> player.health == any.toDouble()
             else -> return true
         }
     }

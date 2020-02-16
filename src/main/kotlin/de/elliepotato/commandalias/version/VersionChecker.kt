@@ -3,7 +3,6 @@ package de.elliepotato.commandalias.version
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import de.elliepotato.commandalias.CommandAlias
-import de.elliepotato.sleepy.version.VersionParser
 import org.bukkit.ChatColor
 import java.io.BufferedReader
 import java.io.IOException
