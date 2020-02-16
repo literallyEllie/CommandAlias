@@ -4,10 +4,8 @@ import com.google.common.collect.Maps
 import de.elliepotato.commandalias.CommandAlias
 import org.bukkit.ChatColor
 import org.bukkit.configuration.InvalidConfigurationException
-import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.configuration.file.FileConfiguration
 import org.yaml.snakeyaml.scanner.ScannerException
-import java.io.File
-import java.util.*
 import java.util.function.Consumer
 import java.util.logging.Level
 import java.util.stream.Collectors
@@ -29,62 +27,42 @@ import java.util.stream.Collectors
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-class AliasConfig(private val core: CommandAlias, dir: File) {
+class AliasConfig(private val plugin: CommandAlias) {
 
-    private val file: File = File(dir, "config.yml")
-    private var cfg: YamlConfiguration
+    private var cfg: FileConfiguration
 
     init {
+        plugin.saveDefaultConfig()
+        cfg = plugin.getConfig()
 
-        if (!file.exists()) {
-            // if (!file.createNewFile()) throw IOException("Failed to create config.yml!")
-            core.saveResource("config.yml", false)
-        }
-
-        cfg = YamlConfiguration.loadConfiguration(file)
-
+        var changes = false
         if (!cfg.isConfigurationSection("commands")) {
             cfg.createSection("commands")
-            save(cfg)
+            changes = true
         }
-
-        /* Since 1.3.1
-        if (first) {
-            cfg.set("prefix", "&7[&aCommandAlias&7] &c")
-            cfg.set("noPermission", "{prefix}No permission!")
-            cfg.set("commands.gamemode.aliases", Arrays.asList("gm", "gamemodepls"))
-            cfg.set("commands.gamemode.enabled", true)
-            cfg.set("commands.gamemode.permission", "")
-            cfg.set("commands.list.aliases", Collections.singletonList("peepsonline"))
-            cfg.set("commands.list.enabled", true)
-            cfg.set("commands.-msg-wiki.aliases", Collections.singletonList("You can find our wiki at: www.wikipedia.com!"))
-            cfg.set("commands.-msg-wiki.enabled", true)
-            save(cfg)
-        }
-        */
 
         /* Since 1.1 */
         if (!cfg.isSet("prefix")) {
             cfg["prefix"] = "&7[&aCommandAlias&7] &c"
-            save(cfg)
+            changes = true
         }
 
         /* Since 1.2 */
         if (!cfg.isSet("noPermission")) {
             cfg["noPermission"] = "{prefix}No permission!"
-            save(cfg)
+            changes = true
         }
 
         /* Since 1.3.2 */
         if (!cfg.isSet("advanced.keep-iterating-when-match")) {
             cfg["advanced.keep-iterating-when-match"] = false
-            save(cfg)
+            changes = true
         }
 
         /* Since 1.4.2 */
         if (!cfg.isSet("advanced.let-command-event-run-if-no-perm")) {
             cfg["advanced.let-command-event-run-if-no-perm"] = false;
-            save(cfg)
+            changes = true
         }
 
         /* Sike
@@ -94,11 +72,20 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
         }
          */
 
+        if (changes)
+            save()
+    }
+
+    /**
+     * Reload cached instance
+     */
+    fun reloadFile() {
+        plugin.reloadConfig()
+        cfg = plugin.getConfig()
     }
 
     /***
-     *
-     * Get a new instance of commands
+     * Load commands from config and return in a map
      *
      * @return a list of commands fed from the configuration file
      * @throws IllegalStateException If a configuration value of a alias is null
@@ -106,8 +93,8 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
      * @throws InvalidConfigurationException By the YAML parser if the config is invalid.
      * @throws NullPointerException If the configuration section "commands" doesn't exist
      */
-    fun getCommands(): HashMap<String, AliasCommand> {
-        val commands: HashMap<String, AliasCommand> = Maps.newHashMap()
+    fun getCommands(): MutableMap<String, AliasCommand> {
+        val commands: MutableMap<String, AliasCommand> = Maps.newHashMap()
         try {
             cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { t ->
                 // label
@@ -126,71 +113,69 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
                 if (type != CommandType.CMD)
                     label = label.split(type.prefix)[1]
 
-                var runCondition: RunCondition? = null
-                // run condition
+                val runConditions: MutableMap<String, Any> = Maps.newHashMap()
+                // load run conditions
                 if (cfg.isConfigurationSection("commands.$t.conditions")) {
-                    // early days :p
-                    cfg.getConfigurationSection("commands.$t.conditions")!!.getKeys(false).forEach(Consumer { condition ->
-                        if (condition == "args")
-                            runCondition = RunCondition(cfg.getInt("commands.$t.conditions.$condition"))
-                    })
+                    cfg.getConfigurationSection("commands.$t.conditions")!!.getKeys(false)
+                            .forEach { k -> runConditions[k.toLowerCase()] = cfg["commands.$t.conditions.$k"]!! }
                 }
 
                 try {
-                    val command = AliasCommand(label, enabled, permission, aliases, type, runCondition)
+                    val command = AliasCommand(label, enabled, permission, aliases, type, runConditions)
                     commands[label.toLowerCase()] = command
                 } catch (e: IllegalStateException) {
-                    core.log("The config is improperly defined! Cannot load alias $label.", Level.SEVERE)
-                    core.error = "Failed to set alias instance (${e.message})"
+                    plugin.log("The config is improperly defined! Cannot load alias $label.", Level.SEVERE)
+                    plugin.error = "Failed to set alias instance (${e.message})"
                     e.printStackTrace()
                 }
             })
-        } catch (e: ScannerException) {
-            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
-            core.error = "Bad config"
-            e.printStackTrace()
-        } catch (e: InvalidConfigurationException) {
-            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
-            core.error = "Bad config"
-            e.printStackTrace()
-        } catch (e: NullPointerException) {
-            core.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
-            core.error = "Configuration section 'commands' doesn't exist" // what
-            e.printStackTrace()
+        } catch (ex: Exception) {
+            plugin.log("The config is improperly defined! Please refer to http://www.yamllint.com/", Level.SEVERE)
+            ex.printStackTrace()
+            when (ex) {
+                is ScannerException, is InvalidConfigurationException -> plugin.error = "Bad config"
+                is java.lang.NullPointerException -> plugin.error = "Configuration section 'commands' doesn't exist"
+                else -> plugin.error = "unknown error occured, check console for details"
+            }
         }
-        /* THANK YOU KOTLIN FOR THIS LOVELY TRIPLE CATCH :)) */
+
         return commands
     }
 
-    fun getPrefix(): String = cfg.getString("prefix")!!
+    /***
+     * Toggles an alias' enabled state in the config and in the given map.
+     *
+     * @return Pair<HashMap<String, AliasCommand> = The new HashMap, boolean (has the map been modified?)
+     */
+    fun toggleAlias(commands: MutableMap<String, AliasCommand>, label: String): Pair<MutableMap<String, AliasCommand>, Boolean> {
+        val alias: AliasCommand = commands[label.toLowerCase()] ?: return Pair(commands, false)
 
-    fun getNoPerm(): String = cfg.getString("noPermission")!!.replace("{prefix}", getPrefix())
+        cfg.set("commands.${alias.serialiseLabel().toLowerCase()}.enabled", !alias.enabled)
+        save()
+        alias.enabled = !alias.enabled
 
-    fun isVersionChecking(): Boolean = cfg.getBoolean("version-check", true)
+        return Pair(commands, true)
+    }
+
+    /* Setting getters */
+
+    fun getPrefix(): String = color(cfg.getString("prefix")!!)
+
+    fun getNoPerm(): String = color(cfg.getString("noPermission")!!.replace("{prefix}", getPrefix()))
+
+    fun isVersionChecking(): Boolean = cfg.getBoolean("version-check", false)
 
     fun isBreakAfterAliasMatch(): Boolean = !cfg.getBoolean("advanced.keep-iterating-when-match", false)
 
     fun isLetCmdRunIfNoPerm(): Boolean = cfg.getBoolean("advanced.let-command-event-run-if-no-perm", false)
 
-    fun save(config: YamlConfiguration) {
-        config.save(file)
-    }
-
-    fun reload() {
-        cfg = YamlConfiguration.loadConfiguration(file)
-    }
-
-    /***
-     * @return Pair<HashMap<String, AliasCommand> = The new HashMap, boolean (has the map been modified?)
+    /**
+     * Colors a message with '&'
      */
-    fun toggleAlias(commands: HashMap<String, AliasCommand>, label: String): Pair<HashMap<String, AliasCommand>, Boolean> {
-        val alias: AliasCommand = commands[label.toLowerCase()] ?: return Pair(commands, false)
+    private fun color(msg: String): String = ChatColor.translateAlternateColorCodes('&', msg)
 
-        cfg.set("commands.${alias.serialiseLabel().toLowerCase()}.enabled", !alias.enabled)
-        save(cfg)
-        alias.enabled = !alias.enabled
-
-        return Pair(commands, true)
+    private fun save() {
+        plugin.saveConfig()
     }
 
 }

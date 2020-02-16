@@ -1,9 +1,13 @@
-package de.elliepotato.commandalias.backend
+package de.elliepotato.commandalias.backend.prerun.impl
+
+import de.elliepotato.commandalias.backend.AliasCommand
+import de.elliepotato.commandalias.backend.prerun.RunCondition
+import org.bukkit.entity.Player
 
 /**
- * Created by Ellie on 16/09/2017 for CommandAlias.
+ * Created by Ellie on 15/02/2020 for CommandAlias.
  *
- *    Copyright 2017 Ellie
+ *    Copyright 2020 Ellie
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +21,14 @@ package de.elliepotato.commandalias.backend
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-enum class CommandType(val prefix: String) {
+class RunConditionArgs : RunCondition {
 
-    MSG("-msg-"),
-    SERVER("-server-"),
-    CMD(""), /* at the bottom so others can get matched first */
+    override fun getId(): String {
+        return "args"
+    }
 
-    ;
+    override fun meetsConditions(alias: AliasCommand, args: List<String>, player: Player): Boolean {
+        return args.size - 1 == alias.runConditions[getId()] as Int
+    }
 
 }

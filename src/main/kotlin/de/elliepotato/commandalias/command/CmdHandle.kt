@@ -1,6 +1,5 @@
 package de.elliepotato.commandalias.command
 
-import com.google.common.collect.Iterables
 import com.google.common.collect.Lists
 import de.elliepotato.commandalias.CommandAlias
 import org.bukkit.ChatColor
@@ -8,8 +7,6 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
-import java.util.*
-import java.util.stream.Collectors
 
 /**
  * Created by Ellie on 27/07/2017 for PublicPlugins.
@@ -28,11 +25,11 @@ import java.util.stream.Collectors
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-class CmdHandle(private val core: CommandAlias) : CommandExecutor, TabCompleter {
+class CmdHandle(private val plugin: CommandAlias) : CommandExecutor, TabCompleter {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (!core.error.isNullOrEmpty())
-            msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error on start up! Check console. Error description: ${core.error}")
+        if (!plugin.error.isNullOrEmpty())
+            msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error on start up! Check console. Error description: ${plugin.error}")
 
         if (args.isEmpty()) {
             msg(sender, correctUsage())
@@ -58,20 +55,20 @@ class CmdHandle(private val core: CommandAlias) : CommandExecutor, TabCompleter 
 
     private fun handleReload(sender: CommandSender) {
         if (!sender.hasPermission("commandalias.reload"))
-            return msg(sender, core.noPermission)
+            return msg(sender, plugin.noPermission)
 
-        core.reload()
-        if (!core.error.isNullOrEmpty()) msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error whilst reloading! Check console. Error description: ${core.error}")
+        plugin.reload()
+        if (!plugin.error.isNullOrEmpty()) msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error whilst reloading! Check console. Error description: ${plugin.error}")
         msg(sender, "Reloaded.")
     }
 
     private fun handleToggle(sender: CommandSender, args: Array<out String>) {
         if (!sender.hasPermission("commandalias.toggle"))
-            return msg(sender, core.noPermission)
+            return msg(sender, plugin.noPermission)
 
-        if (!core.error.isNullOrEmpty()) {
+        if (!plugin.error.isNullOrEmpty()) {
             msg(sender, "${ChatColor.RED}Warning! The plugin has detected an error on start up so " +
-                    "this sub-command cannot be executed! Check console. Error description: ${core.error}")
+                    "this sub-command cannot be executed! Check console. Error description: ${plugin.error}")
             return // soz
         }
 
@@ -81,15 +78,15 @@ class CmdHandle(private val core: CommandAlias) : CommandExecutor, TabCompleter 
         }
         val label = args[1]
 
-        val rMap = core.config.toggleAlias(core.commands, label)
-        if (!rMap.second) msg(sender, "Couldn't find value of '$label'.")
+        val changed = plugin.toggleAlias(label)
+        if (!changed)
+            msg(sender, "Couldn't find alias with the label of '$label'.")
         else {
-            core.commands = rMap.first
             msg(sender, "Toggled '$label'.")
         }
     }
 
-    private fun msg(sender: CommandSender, msg: String) = sender.sendMessage(core.color(core.prefix + msg))
+    private fun msg(sender: CommandSender, msg: String) = sender.sendMessage(plugin.prefix + msg)
 
     private fun correctUsage(): String = "Correct usage: ${ChatColor.GRAY}/ca <reload | toggle <label>>"
 

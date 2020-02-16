@@ -51,8 +51,11 @@ commands:
     aliases:
       - '&dHeal who?'
     enabled: true
-    # Conditions as of 1.4.2
+    # Conditions as of 1.5
     #   "args" -> integer (args in command)
+    #   "world" -> string/list (the world a player is in)
+    #   "gamemode" -> survival/creative etc
+    #   "health" -> player's health
     conditions:
       # With "0", it will only show if no args (doesn't include label)
       args: 0

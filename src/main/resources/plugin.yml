@@ -1,11 +1,13 @@
 name: CommandAlias
-main: de.elliepotato.commandalias.CommandAlias
-version: 1.4.2-RELEASE
-api-version: 1.15
-author: xEline
+version: 1.5-SNAPSHOT
+author: PotatoTheEllie
 description: Easy, Lightweight plugin for easy command aliases.
 website: www.elliepotato.de
+
 softdepend: [PlaceholderAPI]
+
+main: de.elliepotato.commandalias.CommandAlias
+api-version: 1.15
 
 commands:
   ca:

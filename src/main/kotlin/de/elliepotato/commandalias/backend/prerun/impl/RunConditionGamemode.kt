@@ -1,11 +1,13 @@
-package de.elliepotato.commandalias.hook
+package de.elliepotato.commandalias.backend.prerun.impl
 
+import de.elliepotato.commandalias.backend.AliasCommand
+import de.elliepotato.commandalias.backend.prerun.RunCondition
 import org.bukkit.entity.Player
 
 /**
- * Created by Ellie on 11/03/2018 for CommandAlias.
+ * Created by Ellie on 16/02/2020 for CommandAlias.
  *
- *    Copyright 2018 Ellie
+ *    Copyright 2020 Ellie
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,13 +21,14 @@ import org.bukkit.entity.Player
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-interface CAHook {
+class RunConditionGamemode : RunCondition {
 
-    /**
-     * Process a message
-     *
-     * @return the processed message
-     */
-    fun process(message: String, sender: Player): String
+    override fun getId(): String {
+        return "gamemode"
+    }
+
+    override fun meetsConditions(alias: AliasCommand, args: List<String>, player: Player): Boolean {
+        return player.gameMode.name == (alias.runConditions[getId()] as String).toUpperCase()
+    }
 
 }

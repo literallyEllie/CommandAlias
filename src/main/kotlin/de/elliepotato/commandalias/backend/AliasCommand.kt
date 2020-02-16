@@ -1,5 +1,7 @@
 package de.elliepotato.commandalias.backend
 
+import com.google.common.collect.Maps
+
 /**
  * Created by Ellie on 16/09/2017 for CommandAlias.
  *
@@ -18,7 +20,7 @@ package de.elliepotato.commandalias.backend
  *  limitations under the License.
  */
 class AliasCommand(val label: String, var enabled: Boolean, val permission: String?, val aliases: List<String>,
-                   val type: CommandType, val runCondition: RunCondition?) {
+                   val type: CommandType = CommandType.CMD, val runConditions: Map<String, Any> = Maps.newHashMap()) {
 
     fun serialiseLabel() = "${type.prefix}$label"
 

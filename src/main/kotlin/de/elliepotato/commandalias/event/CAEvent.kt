@@ -1,9 +1,12 @@
-package de.elliepotato.commandalias.backend
+package de.elliepotato.commandalias.event
+
+import org.bukkit.event.Event
+import org.bukkit.event.HandlerList
 
 /**
- * Created by Ellie on 16/09/2017 for CommandAlias.
+ * Created by Ellie on 15/02/2020 for CommandAlias.
  *
- *    Copyright 2017 Ellie
+ *    Copyright 2020 Ellie
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +20,13 @@ package de.elliepotato.commandalias.backend
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-enum class CommandType(val prefix: String) {
+open class CAEvent(async: Boolean = false) : Event(async) {
 
-    MSG("-msg-"),
-    SERVER("-server-"),
-    CMD(""), /* at the bottom so others can get matched first */
+    companion object {
+        private val HANDLER_LIST = HandlerList()
+        fun getHandlerList() = HANDLER_LIST
+    }
 
-    ;
+    override fun getHandlers(): HandlerList = HANDLER_LIST
 
 }

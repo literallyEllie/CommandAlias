@@ -1,17 +1,23 @@
 package de.elliepotato.commandalias
 
+import com.google.common.collect.Maps
 import com.google.common.collect.Sets
 import de.elliepotato.commandalias.backend.AliasCommand
 import de.elliepotato.commandalias.backend.AliasConfig
 import de.elliepotato.commandalias.backend.CommandType
+import de.elliepotato.commandalias.backend.prerun.RunCondition
+import de.elliepotato.commandalias.backend.prerun.impl.RunConditionArgs
+import de.elliepotato.commandalias.backend.prerun.impl.RunConditionGamemode
+import de.elliepotato.commandalias.backend.prerun.impl.RunConditionHealth
+import de.elliepotato.commandalias.backend.prerun.impl.RunConditionWorld
 import de.elliepotato.commandalias.bungee.BungeeConnector
 import de.elliepotato.commandalias.command.CmdHandle
+import de.elliepotato.commandalias.event.CAPluginReloadEvent
 import de.elliepotato.commandalias.hook.CAHook
 import de.elliepotato.commandalias.hook.DefaultPlaceholders
 import de.elliepotato.commandalias.hook.HookPlaceholderAPI
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -38,12 +44,13 @@ import java.util.logging.Level
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-class CommandAlias : JavaPlugin() {
+class CommandAlias : JavaPlugin(), CommandAliasAPI {
 
     lateinit var config: AliasConfig
 
-    lateinit var commands: HashMap<String, AliasCommand>
-    lateinit var hookProcessors: MutableSet<CAHook>
+    private lateinit var commands: MutableMap<String, AliasCommand>
+    private lateinit var hookProcessors: MutableSet<CAHook>
+    private lateinit var runConditions: MutableMap<String, RunCondition>
     lateinit var bungeeConnector: BungeeConnector
 
     lateinit var prefix: String
@@ -56,26 +63,27 @@ class CommandAlias : JavaPlugin() {
         }
 
     override fun onEnable() {
-        if (!dataFolder.exists()) dataFolder.mkdirs()
-
-        config = AliasConfig(this, dataFolder)
-        commands = config.getCommands()
-        prefix = config.getPrefix()
-        noPermission = config.getNoPerm()
+        // setup plugin
+        config = AliasConfig(this)
         hookProcessors = Sets.newHashSet()
-        softDependencyRegister()
+        runConditions = Maps.newHashMap()
         bungeeConnector = BungeeConnector(this)
 
+        // load values into memory
+        reload()
+
+        // register command
         getCommand("ca")!!.setExecutor(CmdHandle(this))
 
+        // register listeners
         Bukkit.getPluginManager().registerEvents(object : Listener {
 
             @EventHandler
-            fun on(e: PlayerJoinEvent) {
+            fun onJoin(event: PlayerJoinEvent) {
                 if (!config.isVersionChecking() || updateMeMessage == null)
                     return
 
-                val player = e.player
+                val player = event.player
                 if (!player.hasPermission("commandalias.reload"))
                     return
 
@@ -83,9 +91,9 @@ class CommandAlias : JavaPlugin() {
             }
 
             @EventHandler(priority = EventPriority.LOW)
-            fun onCommand(e: PlayerCommandPreprocessEvent) {
-                val player: Player = e.player
-                val message: String = e.message.replaceFirst("/", "")
+            fun onCommand(event: PlayerCommandPreprocessEvent) {
+                val player: Player = event.player
+                val message: String = event.message.replaceFirst("/", "")
 
                 val args = message.split(" ");
                 val argOne = args[0]
@@ -96,30 +104,39 @@ class CommandAlias : JavaPlugin() {
                     if (!toEx.enabled || (key != argOne && !toEx.aliases.contains(argOne)))
                         continue
 
-                    // If has run condition AND not met
-                    if (toEx.runCondition != null && !toEx.runCondition.doesMeetConditions(args))
+                    // check run condition, for each run condition it has, if one is not met break.
+                    if (toEx.runConditions
+                                    .filter { entry -> runConditions.containsKey(entry.key) }
+                                    .any { entry ->
+                                        try {
+                                            !runConditions[entry.key]!!.meetsConditions(toEx, args, player)
+                                        } catch (ex: Exception) {
+                                            log("The run condition ${entry.key} threw an unexpected error whilst processing", Level.SEVERE)
+                                            ex.printStackTrace()
+                                            false
+                                        }
+                                    })
                         break
 
-                    e.isCancelled = true
+                    event.isCancelled = true
                     // if no perm OR they have the perm
                     if (toEx.permission.isNullOrEmpty() || player.hasPermission(toEx.permission)) {
-
                         // response
                         when (toEx.type) {
                             CommandType.MSG -> toEx.aliases.forEach { m -> player.sendMessage(processString(m, player)) }
                             CommandType.SERVER -> bungeeConnector.sendServer(player, key)
                             CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}${processString(commandArgs, player)}")
                         }
-
                     } else if (noPermission.isNotEmpty()) {
                         // if let run if no permission, uncancel + disregard
                         if (config.isLetCmdRunIfNoPerm()) {
-                            e.isCancelled = false
+                            event.isCancelled = false
                             break
                         }
 
-                        player.sendMessage(color(noPermission))
+                        player.sendMessage(noPermission)
                     }
+
                     if (config.isBreakAfterAliasMatch())
                         break
                 }
@@ -127,48 +144,119 @@ class CommandAlias : JavaPlugin() {
 
         }, this)
 
+        // Start metrics
         Metrics(this, 1242)
 
-        log("${commands.size} command aliases were loaded!")
-        log("CommandAlias V.${description.version}, by Ellie, has been enabled!")
+        log("CommandAlias V.${description.version}, by Ellie#0006, has been enabled!")
     }
 
     override fun onDisable() {
         commands.clear()
         hookProcessors.clear()
+        runConditions.clear()
 
-        log("CommandAlias V.${description.version}, by Ellie, has been disabled!")
+        log("CommandAlias V.${description.version}, by Ellie#0006, has been disabled!")
     }
 
     fun log(message: String, level: Level = Level.INFO) = logger.log(level, message)
 
+    /**
+     * Reloads the plugin completely.
+     */
     fun reload() {
         error = null
-        config.reload()
+        // load config stuff
+        config.reloadFile()
         commands = config.getCommands()
+        prefix = config.getPrefix()
         noPermission = config.getNoPerm()
-        hookProcessors.clear()
-        softDependencyRegister()
 
+        // reg hook processor
+        hookProcessors.clear()
+        registerInternalHookProcesors()
+        // reg run condition
+        runConditions.clear()
+        registerInternalRunConditionTypes()
+
+        // call event
+        server.pluginManager.callEvent(CAPluginReloadEvent(this))
         log("${commands.size} command aliases were loaded!")
     }
 
-    fun color(msg: String): String = ChatColor.translateAlternateColorCodes('&', msg)
+    /* API Methods */
 
-    private fun softDependencyRegister() {
-        if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) {
-            log("PlaceholderAPI found! Utilizing...")
-            hookProcessors.add(HookPlaceholderAPI())
-        }
-        hookProcessors.add(DefaultPlaceholders()) // %name% and %display_name%
+    override fun registerAlias(aliasCommand: AliasCommand) {
+        this.commands[aliasCommand.label.toLowerCase()] = aliasCommand
     }
 
-    fun processString(message: String, sender: Player): String {
-        var newMsg = message
-        for (hookProcessor in hookProcessors) {
-            newMsg = hookProcessor.process(newMsg, sender)
+    override fun unregisterAlias(label: String) {
+        this.commands.remove(label.toLowerCase())
+    }
+
+    override fun toggleAlias(label: String): Boolean {
+        val response = config.toggleAlias(commands, label)
+        if (response.second) {
+            this.commands = response.first
         }
+        return response.second
+    }
+
+    override fun registerRunCondition(runCondition: RunCondition) {
+        this.runConditions[runCondition.getId().toLowerCase()] = runCondition
+    }
+
+    override fun unregisterRunCondition(id: String) {
+        this.runConditions.remove(id.toLowerCase())
+    }
+
+    override fun registerPlaceholderHook(hook: CAHook) {
+        hookProcessors.add(hook)
+    }
+
+    override fun unregisterPlaceholderHook(hook: CAHook) {
+        hookProcessors.remove(hook)
+    }
+
+    override fun processString(message: String, sender: Player): String {
+        var newMsg = message
+
+        hookProcessors.forEach { processor ->
+            try {
+                newMsg = processor.process(newMsg, sender)
+            } catch (ex: Exception) {
+                log("The placeholder processor ${processor.javaClass.simpleName} threw an unexpected error whilst processing")
+                ex.printStackTrace()
+            }
+        }
+
         return newMsg
+    }
+
+    /**
+     * Registers soft dependency handlers.
+     */
+    private fun registerInternalHookProcesors() {
+        if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) {
+            log("PlaceholderAPI found! Utilizing...")
+            registerPlaceholderHook(HookPlaceholderAPI())
+        }
+
+        // %name% and %display_name%
+        registerPlaceholderHook(DefaultPlaceholders())
+    }
+
+    /**
+     * Register internal run conditions for the aliases
+     */
+    private fun registerInternalRunConditionTypes() {
+        // Args
+        registerRunCondition(RunConditionWorld())
+        // World
+        registerRunCondition(RunConditionArgs())
+        // Gamemode
+        registerRunCondition(RunConditionGamemode())
+        // Healh
+        registerRunCondition(RunConditionHealth())
     }
 
 }

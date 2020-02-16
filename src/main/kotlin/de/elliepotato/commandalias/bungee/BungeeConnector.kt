@@ -36,7 +36,7 @@ class BungeeConnector(private val plugin: CommandAlias) {
 
         plugin.server.pluginManager.registerEvents(object : Listener {
             @EventHandler
-            fun on(e: PlayerQuitEvent) {
+            fun onQuit(e: PlayerQuitEvent) {
                 pendingConnection.remove(e.player)
             }
         }, plugin)

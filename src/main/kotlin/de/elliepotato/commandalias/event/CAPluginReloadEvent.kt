@@ -1,4 +1,6 @@
-package de.elliepotato.commandalias.backend
+package de.elliepotato.commandalias.event
+
+import de.elliepotato.commandalias.CommandAliasAPI
 
 /**
  * Created by Ellie on 15/02/2020 for CommandAlias.
@@ -17,8 +19,10 @@ package de.elliepotato.commandalias.backend
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-class RunCondition(private val commandArgs: Int) {
 
-    fun doesMeetConditions(args: List<String>): Boolean = args.size - 1 == commandArgs;
-
-}
+/**
+ * Event called when the plugin is reloaded via command or at startup.
+ *
+ * @param plugin instance of the plugin API
+ */
+class CAPluginReloadEvent(val plugin: CommandAliasAPI) : CAEvent(false)
