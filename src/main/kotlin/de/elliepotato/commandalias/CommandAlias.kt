@@ -72,37 +72,56 @@ class CommandAlias : JavaPlugin() {
 
             @EventHandler
             fun on(e: PlayerJoinEvent) {
-                if (!config.isVersionChecking() || updateMeMessage == null) return
+                if (!config.isVersionChecking() || updateMeMessage == null)
+                    return
 
                 val player = e.player
-                if (!player.hasPermission("commandalias.reload")) return
+                if (!player.hasPermission("commandalias.reload"))
+                    return
 
                 player.sendMessage("${config.getPrefix()} $updateMeMessage")
             }
 
             @EventHandler(priority = EventPriority.LOW)
-            fun on(e: PlayerCommandPreprocessEvent) {
+            fun onCommand(e: PlayerCommandPreprocessEvent) {
                 val player: Player = e.player
                 val message: String = e.message.replaceFirst("/", "")
 
-                val argOne = message.split(" ")[0]
+                val args = message.split(" ");
+                val argOne = args[0]
                 val commandArgs = message.substring(argOne.length)
 
                 for ((key, toEx) in commands) {
-                    // if not enabled or
-                    if (!toEx.enabled || (key != argOne && !toEx.aliases.contains(argOne))) continue
+                    // if not enabled or isn't what looking for
+                    if (!toEx.enabled || (key != argOne && !toEx.aliases.contains(argOne)))
+                        continue
+
+                    // If has run condition AND not met
+                    if (toEx.runCondition != null && !toEx.runCondition.doesMeetConditions(args))
+                        break
+
                     e.isCancelled = true
+                    // if no perm OR they have the perm
                     if (toEx.permission.isNullOrEmpty() || player.hasPermission(toEx.permission)) {
 
+                        // response
                         when (toEx.type) {
                             CommandType.MSG -> toEx.aliases.forEach { m -> player.sendMessage(processString(m, player)) }
                             CommandType.SERVER -> bungeeConnector.sendServer(player, key)
                             CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}${processString(commandArgs, player)}")
                         }
 
-                    } else if (noPermission.isNotEmpty())
+                    } else if (noPermission.isNotEmpty()) {
+                        // if let run if no permission, uncancel + disregard
+                        if (config.isLetCmdRunIfNoPerm()) {
+                            e.isCancelled = false
+                            break
+                        }
+
                         player.sendMessage(color(noPermission))
-                    if (config.isBreakAfterAliasMatch()) break
+                    }
+                    if (config.isBreakAfterAliasMatch())
+                        break
                 }
             }
 
@@ -117,6 +136,7 @@ class CommandAlias : JavaPlugin() {
     override fun onDisable() {
         commands.clear()
         hookProcessors.clear()
+
         log("CommandAlias V.${description.version}, by Ellie, has been disabled!")
     }
 
@@ -126,8 +146,10 @@ class CommandAlias : JavaPlugin() {
         error = null
         config.reload()
         commands = config.getCommands()
+        noPermission = config.getNoPerm()
         hookProcessors.clear()
         softDependencyRegister()
+
         log("${commands.size} command aliases were loaded!")
     }
 

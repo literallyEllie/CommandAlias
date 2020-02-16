@@ -1,5 +1,5 @@
 # Welcome to the CommandAlias config! It is very pretty now.
-# For support see https://www.spigotmc.org/resources/commandalias.44362/ or add me Ellie#0006
+# For support see https://www.spigotmc.org/resources/commandalias.44362/ or join https://discord.gg/c2myRcs
 # MAKE SURE YOU VALIDATE THE CONFIG BEFORE SAVING http://www.yamllint.com
 #
 # This plugin supports PlaceHolderAPI but there are some native placeholders too:
@@ -15,8 +15,12 @@ advanced:
   # Should it keep iterating through commands when it finds a match?
   # Enabling this can be useful if you have one alias doing multiple things.
   keep-iterating-when-match: false
+  # Should the command run through if they do not have the permission?
+  # Enabling this can be useful if you want to use an alias as a custom no permission message.
+  let-command-event-run-if-no-perm: false
 
 # Create a command here.
+# Here are lots of examples, feel free to delete them as you wish.
 commands:
   # The actual command you would need to run.
   gamemode:
@@ -42,3 +46,13 @@ commands:
     aliases:
       - 'You can find our wiki at: www.wikipedia.com!'
     enabled: true
+  # Example of advanced usage with conditions
+  -msg-heal:
+    aliases:
+      - '&dHeal who?'
+    enabled: true
+    # Conditions as of 1.4.2
+    #   "args" -> integer (args in command)
+    conditions:
+      # With "0", it will only show if no args (doesn't include label)
+      args: 0

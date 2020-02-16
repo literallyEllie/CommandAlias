@@ -64,20 +64,26 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
         */
 
         /* Since 1.1 */
-        if (cfg.get("prefix") == null) {
-            cfg.set("prefix", "&7[&aCommandAlias&7] &c")
+        if (!cfg.isSet("prefix")) {
+            cfg["prefix"] = "&7[&aCommandAlias&7] &c"
             save(cfg)
         }
 
         /* Since 1.2 */
-        if (cfg.get("noPermission") == null) {
-            cfg.set("noPermission", "{prefix}No permission!")
+        if (!cfg.isSet("noPermission")) {
+            cfg["noPermission"] = "{prefix}No permission!"
             save(cfg)
         }
 
         /* Since 1.3.2 */
-        if (cfg.get("advanced.keep-iterating-when-match") == null) {
-            cfg.set("advanced.keep-iterating-when-match", false);
+        if (!cfg.isSet("advanced.keep-iterating-when-match")) {
+            cfg["advanced.keep-iterating-when-match"] = false
+            save(cfg)
+        }
+
+        /* Since 1.4.2 */
+        if (!cfg.isSet("advanced.let-command-event-run-if-no-perm")) {
+            cfg["advanced.let-command-event-run-if-no-perm"] = false;
             save(cfg)
         }
 
@@ -104,19 +110,34 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
         val commands: HashMap<String, AliasCommand> = Maps.newHashMap()
         try {
             cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { t ->
+                // label
                 var label: String = t
+                // enabled
                 val enabled = cfg.getBoolean("commands.$t.enabled")
-
+                // perm
                 val permission = cfg.getString("commands.$t.permission")
-                // color now, save later
+                // aliases
                 val aliases = cfg.getStringList("commands.$t.aliases").stream()
                         .map { m -> ChatColor.translateAlternateColorCodes('&', m) }
                         .collect(Collectors.toList())
+                // type
                 val type: CommandType = CommandType.values().firstOrNull { label.startsWith(it.prefix) }
                         ?: CommandType.CMD
-                if (type != CommandType.CMD) label = label.split(type.prefix)[1]
+                if (type != CommandType.CMD)
+                    label = label.split(type.prefix)[1]
+
+                var runCondition: RunCondition? = null
+                // run condition
+                if (cfg.isConfigurationSection("commands.$t.conditions")) {
+                    // early days :p
+                    cfg.getConfigurationSection("commands.$t.conditions")!!.getKeys(false).forEach(Consumer { condition ->
+                        if (condition == "args")
+                            runCondition = RunCondition(cfg.getInt("commands.$t.conditions.$condition"))
+                    })
+                }
+
                 try {
-                    val command = AliasCommand(label, enabled, permission, aliases, type)
+                    val command = AliasCommand(label, enabled, permission, aliases, type, runCondition)
                     commands[label.toLowerCase()] = command
                 } catch (e: IllegalStateException) {
                     core.log("The config is improperly defined! Cannot load alias $label.", Level.SEVERE)
@@ -148,6 +169,8 @@ class AliasConfig(private val core: CommandAlias, dir: File) {
     fun isVersionChecking(): Boolean = cfg.getBoolean("version-check", true)
 
     fun isBreakAfterAliasMatch(): Boolean = !cfg.getBoolean("advanced.keep-iterating-when-match", false)
+
+    fun isLetCmdRunIfNoPerm(): Boolean = cfg.getBoolean("advanced.let-command-event-run-if-no-perm", false)
 
     fun save(config: YamlConfiguration) {
         config.save(file)
