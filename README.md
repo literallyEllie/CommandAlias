@@ -26,4 +26,4 @@ When the plugin is reloaded it will clear everything.
 1. Make an instance of what you want to make (RunCondition/AliasCommand/CAHook)
 2. Register it with the API via the event. If you read the API it will become clear.
 
-If you have any queries join this Discord server https://discord.gg/c2myRcs 
+If you have any queries come to https://www.elliepotato.de/support
