@@ -130,9 +130,9 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
                             CommandType.CMD -> server.dispatchCommand(player, processString(formatMessage, player))
                         }
 
-                        if (toEx.consoleCommand != null) {
+                        toEx.consoleCommands.forEach { command ->
                             server.dispatchCommand(server.consoleSender,
-                                    processString(MessageFormat.format(toEx.consoleCommand, *args.toTypedArray()), player)
+                                    processString(MessageFormat.format(command, *args.toTypedArray()), player)
                                             .replace("%alias%", argOne))
                         }
                     } else if (noPermission.isNotEmpty()) {

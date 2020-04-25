@@ -107,7 +107,11 @@ class AliasConfig(private val plugin: CommandAlias) {
                         .map { m -> color(m) }
                         .collect(Collectors.toList())
                 // console command
-                val consoleCommand = cfg.getString("commands.$path.console-command")
+                val consoleCommand =
+                        if (cfg.isList("commands.$path.console-command"))
+                            cfg.getStringList("commands.$path.console-command")
+                        else
+                            listOf(cfg.getString("commands.$path.console-command"))
                 // type
                 val type: CommandType = CommandType.values().firstOrNull { path.startsWith(it.prefix) }
                         ?: CommandType.CMD
