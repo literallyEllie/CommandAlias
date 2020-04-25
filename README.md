@@ -20,7 +20,7 @@ Since 1.5-RELEASE, there is real support for API usage. This API can be used for
 Register your aliases/placeholders/run conditions on the event 
 [CAPluginReloadEvent](https://github.com/literallyEllie/CommandAlias/tree/master/src/main/kotlin/de/elliepotato/commandalias/event/CAPluginReloadEvent.kt).
 Why? Because this event is called whenever the plugin is reloaded, including at startup.
-When the plugin is reloaded it will clear everything.
+When the plugin is reloaded it will clear everything. Though, to do this, you have to load before CommandAlias so you can register before the event is called. Or you load after and register in your onEnable and then again when CAPluginReloadEvent is called.
 
 ##### To actually add your add your own stuff:
 1. Make an instance of what you want to make (RunCondition/AliasCommand/CAHook)
