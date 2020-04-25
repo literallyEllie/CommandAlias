@@ -107,7 +107,10 @@ class AliasConfig(private val plugin: CommandAlias) {
                         .map { m -> color(m) }
                         .collect(Collectors.toList())
                 // console command
-                val consoleCommand = cfg.getString("commands.$path.console-command")
+                val consoleCommands =
+                        if (cfg.isString("commands.$path.console-command"))
+                            listOf(cfg.getString("commands.$path.console-command")!!)
+                        else cfg.getStringList("commands.$path.console-command")
                 // type
                 val type: CommandType = CommandType.values().firstOrNull { path.startsWith(it.prefix) }
                         ?: CommandType.CMD
@@ -122,7 +125,7 @@ class AliasConfig(private val plugin: CommandAlias) {
                 }
 
                 try {
-                    val command = AliasCommand(label, enabled, permission, aliases, type, runConditions, consoleCommand)
+                    val command = AliasCommand(label, enabled, permission, aliases, type, runConditions, consoleCommands)
                     commands[label.toLowerCase()] = command
                 } catch (e: IllegalStateException) {
                     plugin.log("The config is improperly defined! Cannot load alias $path.", Level.SEVERE)

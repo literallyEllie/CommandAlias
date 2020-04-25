@@ -23,7 +23,12 @@ import kotlin.math.max
  */
 class AliasCommand(val label: String, var enabled: Boolean, val permission: String?, val aliases: List<String>,
                    val type: CommandType = CommandType.CMD, val runConditions: LinkedHashMap<String, Any> = Maps.newLinkedHashMap(),
-                   val consoleCommand: String?) {
+                   val consoleCommands: List<String>) {
+
+    @Deprecated("In versions until 1.6.1 only one console command could be specified." +
+            "This getter is for api backwards-compatibility",
+            replaceWith = ReplaceWith("consoleCommands"))
+    val consoleCommand: String? = consoleCommands.firstOrNull()
 
     private val placeholderIndexes: MutableList<Pair<Int, Int>>
 
