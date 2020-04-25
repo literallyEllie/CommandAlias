@@ -25,10 +25,11 @@ advanced:
 # like 'lp user {1} parent set {2}' for /setgroup MyUser MyGroupName
 commands:
   # The actual command you would need to run.
-  gamemode 1:
+  'gamemode 1':
     # What you want it to be accessible by.
     aliases:
       - create
+      - poggerpower
     # You can disable it (also in game)
     enabled: true
     # Permission required to use this aliases (could also be used for custom no perm messages)
@@ -36,24 +37,20 @@ commands:
   list:
     aliases:
       - peepsonline
-    enabled: true
     # A console command that can be run. (you can use any placeholder here), or remove it if you prefer.
     console-command: 'say %name% just ran %alias%!'
   # The "-server-" prefix sends them to the Bungee server, if possible.
   -server-hub:
     aliases:
       - lobby
-    enabled: true
   # The "-msg-" prefix sends them a message with this command. So when you do /wiki, the message below will show. It will only send the first message in the list.
   -msg-wiki:
     aliases:
       - 'You can find our wiki at: www.wikipedia.com!'
-    enabled: true
   # Example of advanced usage with conditions
   -msg-heal:
     aliases:
       - '&dHeal who?'
-    enabled: true
     # Conditions as of 1.5
     #   "args" -> integer (args in command)
     #   "world" -> string/list (the world a player is in)

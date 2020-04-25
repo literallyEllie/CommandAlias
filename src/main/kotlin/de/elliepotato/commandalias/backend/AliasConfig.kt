@@ -99,7 +99,7 @@ class AliasConfig(private val plugin: CommandAlias) {
             cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { path ->
                 var label = path
                 // enabled
-                val enabled = cfg.getBoolean("commands.$path.enabled")
+                val enabled = cfg.getBoolean("commands.$path.enabled", true)
                 // perm
                 val permission = cfg.getString("commands.$path.permission")
                 // aliases
