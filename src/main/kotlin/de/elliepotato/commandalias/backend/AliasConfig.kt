@@ -117,7 +117,7 @@ class AliasConfig(private val plugin: CommandAlias) {
                 if (type != CommandType.CMD)
                     label = label.split(type.prefix)[1]
 
-                val runConditions: MutableMap<String, Any> = Maps.newHashMap()
+                val runConditions: LinkedHashMap<String, Any> = Maps.newLinkedHashMap()
                 // load run conditions
                 if (cfg.isConfigurationSection("commands.$path.conditions")) {
                     cfg.getConfigurationSection("commands.$path.conditions")!!.getKeys(false)

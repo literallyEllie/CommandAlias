@@ -22,7 +22,7 @@ import kotlin.math.max
  *  limitations under the License.
  */
 class AliasCommand(val label: String, var enabled: Boolean, val permission: String?, val aliases: List<String>,
-                   val type: CommandType = CommandType.CMD, val runConditions: Map<String, Any> = Maps.newHashMap(),
+                   val type: CommandType = CommandType.CMD, val runConditions: LinkedHashMap<String, Any> = Maps.newLinkedHashMap(),
                    val consoleCommands: List<String>) {
 
     @Deprecated("In versions until 1.6.1 only one console command could be specified." +
