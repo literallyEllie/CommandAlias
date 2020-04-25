@@ -10,13 +10,13 @@ buildscript {
 }
 
 plugins {
-    id "com.github.johnrengelman.shadow" version '5.1.0'
+    id "com.github.johnrengelman.shadow" version '5.2.0'
     id 'java'
 }
 apply plugin: 'kotlin'
 
 group 'de.elliepotato'
-version '1.5-RELEASE'
+version '1.6-RELEASE'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

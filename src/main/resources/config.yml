@@ -1,5 +1,5 @@
 # Welcome to the CommandAlias config! It is very pretty now.
-# For support see https://www.spigotmc.org/resources/commandalias.44362/ or join https://discord.gg/c2myRcs
+# For support see https://www.spigotmc.org/resources/commandalias.44362/ or see www.elliepotato.de/support
 # MAKE SURE YOU VALIDATE THE CONFIG BEFORE SAVING http://www.yamllint.com
 #
 # This plugin supports PlaceHolderAPI but there are some native placeholders too:
@@ -21,13 +21,14 @@ advanced:
 
 # Create a command here.
 # Here are lots of examples, feel free to delete them as you wish.
+# Argument placeholders are also available to use for more complex needs. You can access them with {1}, {2} etc..
+# like 'lp user {1} parent set {2}' for /setgroup MyUser MyGroupName
 commands:
   # The actual command you would need to run.
-  gamemode:
+  gamemode 1:
     # What you want it to be accessible by.
     aliases:
-      - gm
-      - gamemodepls
+      - create
     # You can disable it (also in game)
     enabled: true
     # Permission required to use this aliases (could also be used for custom no perm messages)
@@ -36,6 +37,8 @@ commands:
     aliases:
       - peepsonline
     enabled: true
+    # A console command that can be run. (you can use any placeholder here), or remove it if you prefer.
+    console-command: 'say %name% just ran %alias%!'
   # The "-server-" prefix sends them to the Bungee server, if possible.
   -server-hub:
     aliases:

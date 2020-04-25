@@ -96,35 +96,36 @@ class AliasConfig(private val plugin: CommandAlias) {
     fun getCommands(): MutableMap<String, AliasCommand> {
         val commands: MutableMap<String, AliasCommand> = Maps.newHashMap()
         try {
-            cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { t ->
-                // label
-                var label: String = t
+            cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { path ->
+                var label = path
                 // enabled
-                val enabled = cfg.getBoolean("commands.$t.enabled")
+                val enabled = cfg.getBoolean("commands.$path.enabled")
                 // perm
-                val permission = cfg.getString("commands.$t.permission")
+                val permission = cfg.getString("commands.$path.permission")
                 // aliases
-                val aliases = cfg.getStringList("commands.$t.aliases").stream()
-                        .map { m -> ChatColor.translateAlternateColorCodes('&', m) }
+                val aliases = cfg.getStringList("commands.$path.aliases").stream()
+                        .map { m -> color(m) }
                         .collect(Collectors.toList())
+                // console command
+                val consoleCommand = cfg.getString("commands.$path.console-command")
                 // type
-                val type: CommandType = CommandType.values().firstOrNull { label.startsWith(it.prefix) }
+                val type: CommandType = CommandType.values().firstOrNull { path.startsWith(it.prefix) }
                         ?: CommandType.CMD
                 if (type != CommandType.CMD)
                     label = label.split(type.prefix)[1]
 
                 val runConditions: MutableMap<String, Any> = Maps.newHashMap()
                 // load run conditions
-                if (cfg.isConfigurationSection("commands.$t.conditions")) {
-                    cfg.getConfigurationSection("commands.$t.conditions")!!.getKeys(false)
-                            .forEach { k -> runConditions[k.toLowerCase()] = cfg["commands.$t.conditions.$k"]!! }
+                if (cfg.isConfigurationSection("commands.$path.conditions")) {
+                    cfg.getConfigurationSection("commands.$path.conditions")!!.getKeys(false)
+                            .forEach { k -> runConditions[k.toLowerCase()] = cfg["commands.$path.conditions.$k"]!! }
                 }
 
                 try {
-                    val command = AliasCommand(label, enabled, permission, aliases, type, runConditions)
+                    val command = AliasCommand(label, enabled, permission, aliases, type, runConditions, consoleCommand)
                     commands[label.toLowerCase()] = command
                 } catch (e: IllegalStateException) {
-                    plugin.log("The config is improperly defined! Cannot load alias $label.", Level.SEVERE)
+                    plugin.log("The config is improperly defined! Cannot load alias $path.", Level.SEVERE)
                     plugin.error = "Failed to set alias instance (${e.message})"
                     e.printStackTrace()
                 }
@@ -135,7 +136,7 @@ class AliasConfig(private val plugin: CommandAlias) {
             when (ex) {
                 is ScannerException, is InvalidConfigurationException -> plugin.error = "Bad config"
                 is java.lang.NullPointerException -> plugin.error = "Configuration section 'commands' doesn't exist"
-                else -> plugin.error = "unknown error occured, check console for details"
+                else -> plugin.error = "unknown error occurred, check console for details"
             }
         }
 
@@ -159,7 +160,7 @@ class AliasConfig(private val plugin: CommandAlias) {
 
     /* Setting getters */
 
-    fun getPrefix(): String = color(cfg.getString("prefix")!!)
+    fun getPrefix(): String = color(cfg.getString("prefix", "&7[&aCommandAlias&7] &c")!!)
 
     fun getNoPerm(): String = color(cfg.getString("noPermission")!!.replace("{prefix}", getPrefix()))
 

@@ -11,7 +11,7 @@ import de.elliepotato.commandalias.backend.prerun.impl.RunConditionGamemode
 import de.elliepotato.commandalias.backend.prerun.impl.RunConditionHealth
 import de.elliepotato.commandalias.backend.prerun.impl.RunConditionWorld
 import de.elliepotato.commandalias.bungee.BungeeConnector
-import de.elliepotato.commandalias.command.CmdHandle
+import de.elliepotato.commandalias.command.CommandHandle
 import de.elliepotato.commandalias.event.CAPluginReloadEvent
 import de.elliepotato.commandalias.hook.CAHook
 import de.elliepotato.commandalias.hook.DefaultPlaceholders
@@ -25,6 +25,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerCommandPreprocessEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.plugin.java.JavaPlugin
+import java.text.MessageFormat
 import java.util.logging.Level
 
 /**
@@ -73,7 +74,7 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
         reload()
 
         // register command
-        getCommand("ca")!!.setExecutor(CmdHandle(this))
+        getCommand("ca")!!.setExecutor(CommandHandle(this))
 
         // register listeners
         Bukkit.getPluginManager().registerEvents(object : Listener {
@@ -97,10 +98,9 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
 
                 val args = message.split(" ");
                 val argOne = args[0]
-                val commandArgs = message.substring(argOne.length)
 
                 for ((key, toEx) in commands) {
-                    // if not enabled or isn't what looking for
+                    // Check enabled and either it is equal to the label or the alias contains it
                     if (!toEx.enabled || (key != argOne && !toEx.aliases.contains(argOne)))
                         continue
 
@@ -121,11 +121,18 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
                     event.isCancelled = true
                     // if no perm OR they have the perm
                     if (toEx.permission.isNullOrEmpty() || player.hasPermission(toEx.permission)) {
+                        val formatMessage = toEx.insertPlaceholders(args)
+
                         // response
                         when (toEx.type) {
                             CommandType.MSG -> toEx.aliases.forEach { m -> player.sendMessage(processString(m, player)) }
                             CommandType.SERVER -> bungeeConnector.sendServer(player, key)
-                            CommandType.CMD -> server.dispatchCommand(player, "${toEx.label}${processString(commandArgs, player)}")
+                            CommandType.CMD -> server.dispatchCommand(player, processString(formatMessage, player))
+                        }
+
+                        if (toEx.consoleCommand != null) {
+                            server.dispatchCommand(server.consoleSender,
+                                    processString(MessageFormat.format(toEx.consoleCommand, args), player).replace("%alias%", argOne))
                         }
                     } else if (noPermission.isNotEmpty()) {
                         // if let run if no permission, uncancel + disregard
@@ -173,7 +180,7 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
 
         // reg hook processor
         hookProcessors.clear()
-        registerInternalHookProcesors()
+        registerInternalHookProcessors()
         // reg run condition
         runConditions.clear()
         registerInternalRunConditionTypes()
@@ -235,7 +242,7 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
     /**
      * Registers soft dependency handlers.
      */
-    private fun registerInternalHookProcesors() {
+    private fun registerInternalHookProcessors() {
         if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) {
             log("PlaceholderAPI found! Utilizing...")
             registerPlaceholderHook(HookPlaceholderAPI())
