@@ -24,6 +24,7 @@ open class CAEvent(async: Boolean = false) : Event(async) {
 
     companion object {
         private val HANDLER_LIST = HandlerList()
+        @JvmStatic
         fun getHandlerList() = HANDLER_LIST
     }
 
