@@ -65,7 +65,6 @@ class AliasCommand(val label: String, var enabled: Boolean, val permission: Stri
             maxArg = max(maxArg, data.second)
         }
 
-
         // max arg will be +1 than args.size
         // do not want to append 0 arg as that is the command label.
         if (args.size > 1 && maxArg < args.size) {
