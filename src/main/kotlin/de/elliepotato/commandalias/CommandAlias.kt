@@ -101,7 +101,7 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
 
                 for ((key, toEx) in commands) {
                     // Check enabled and either it is equal to the label or the alias contains it
-                    if (!toEx.enabled || (key != messageLower && !toEx.aliases.contains(messageLower)))
+                    if (!toEx.enabled || (key != messageLower && (!toEx.aliases.contains(args[0].toLowerCase()) && !toEx.aliases.contains(messageLower))))
                         continue
 
                     // check run condition, for each run condition it has, if one is not met break.
