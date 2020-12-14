@@ -5,6 +5,7 @@ import de.elliepotato.commandalias.CommandAlias
 import org.bukkit.ChatColor
 import org.bukkit.configuration.InvalidConfigurationException
 import org.bukkit.configuration.file.FileConfiguration
+import org.bukkit.configuration.file.YamlConfiguration
 import org.yaml.snakeyaml.scanner.ScannerException
 import java.util.function.Consumer
 import java.util.logging.Level
@@ -33,55 +34,71 @@ class AliasConfig(private val plugin: CommandAlias) {
 
     init {
         plugin.saveDefaultConfig()
-        cfg = plugin.getConfig()
 
-        var changes = false
-        if (!cfg.isConfigurationSection("commands")) {
-            cfg.createSection("commands")
-            changes = true
+        try {
+            cfg = plugin.getConfig()
+
+            var changes = false
+            if (!cfg.isConfigurationSection("commands")) {
+                cfg.createSection("commands")
+                changes = true
+            }
+
+            /* Since 1.1 */
+            if (!cfg.isSet("prefix")) {
+                cfg["prefix"] = "&7[&aCommandAlias&7] &c"
+                changes = true
+            }
+
+            /* Since 1.2 */
+            if (!cfg.isSet("noPermission")) {
+                cfg["noPermission"] = "{prefix}No permission!"
+                changes = true
+            }
+
+            /* Since 1.3.2 */
+            if (!cfg.isSet("advanced.keep-iterating-when-match")) {
+                cfg["advanced.keep-iterating-when-match"] = false
+                changes = true
+            }
+
+            /* Since 1.4.2 */
+            if (!cfg.isSet("advanced.let-command-event-run-if-no-perm")) {
+                cfg["advanced.let-command-event-run-if-no-perm"] = false;
+                changes = true
+            }
+
+            /* Sike
+            if (cfg.get("check-version") == null) {
+                cfg.set("check-version", true)
+                save(cfg)
+            }
+             */
+
+            if (changes)
+                save()
+
+        } catch (e: Throwable) {
+            plugin.log("error loading config, please restart!", Level.SEVERE)
+            e.printStackTrace()
+
+            cfg = YamlConfiguration()
+
         }
 
-        /* Since 1.1 */
-        if (!cfg.isSet("prefix")) {
-            cfg["prefix"] = "&7[&aCommandAlias&7] &c"
-            changes = true
-        }
-
-        /* Since 1.2 */
-        if (!cfg.isSet("noPermission")) {
-            cfg["noPermission"] = "{prefix}No permission!"
-            changes = true
-        }
-
-        /* Since 1.3.2 */
-        if (!cfg.isSet("advanced.keep-iterating-when-match")) {
-            cfg["advanced.keep-iterating-when-match"] = false
-            changes = true
-        }
-
-        /* Since 1.4.2 */
-        if (!cfg.isSet("advanced.let-command-event-run-if-no-perm")) {
-            cfg["advanced.let-command-event-run-if-no-perm"] = false;
-            changes = true
-        }
-
-        /* Sike
-        if (cfg.get("check-version") == null) {
-            cfg.set("check-version", true)
-            save(cfg)
-        }
-         */
-
-        if (changes)
-            save()
     }
 
     /**
      * Reload cached instance
      */
     fun reloadFile() {
-        plugin.reloadConfig()
-        cfg = plugin.getConfig()
+        try {
+            plugin.reloadConfig()
+            cfg = plugin.getConfig()
+        } catch (e: Throwable) {
+            plugin.log("error reloading config due to something you did, please fix and try again", Level.SEVERE)
+            e.printStackTrace()
+        }
     }
 
     /***
@@ -97,14 +114,14 @@ class AliasConfig(private val plugin: CommandAlias) {
         val commands: MutableMap<String, AliasCommand> = Maps.newHashMap()
         try {
             cfg.getConfigurationSection("commands")!!.getKeys(false).forEach(Consumer { path ->
-                var label = path
+                var label = path.toLowerCase()
                 // enabled
                 val enabled = cfg.getBoolean("commands.$path.enabled", true)
                 // perm
                 val permission = cfg.getString("commands.$path.permission")
                 // aliases
                 val aliases = cfg.getStringList("commands.$path.aliases").stream()
-                        .map { m -> color(m) }
+                        .map { m -> color(m.toLowerCase()) }
                         .collect(Collectors.toList())
                 // console command
                 val consoleCommands =

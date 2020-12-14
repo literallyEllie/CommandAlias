@@ -30,6 +30,7 @@ class PayloadWrapper {
 
     @Expose(serialize = false)
     var code = 0
+
     @Expose(serialize = false)
     lateinit var message: String
 

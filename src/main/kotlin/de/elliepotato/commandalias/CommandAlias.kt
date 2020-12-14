@@ -95,14 +95,17 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
             fun onCommand(event: PlayerCommandPreprocessEvent) {
                 val player: Player = event.player
                 val message: String = event.message.replaceFirst("/", "")
+                val messageLower = message.toLowerCase();
 
                 val args = message.split(" ");
-                val argOne = args[0]
 
                 for ((key, toEx) in commands) {
+                    // print("check " + key + " " + toEx.aliases)
                     // Check enabled and either it is equal to the label or the alias contains it
-                    if (!toEx.enabled || (key != argOne && !toEx.aliases.contains(argOne)))
+                    if (!toEx.enabled || (key != messageLower && (!toEx.aliases.contains(args[0].toLowerCase()) && !toEx.aliases.contains(messageLower)))) {
+                        // print(key + " ignore " + toEx.aliases)
                         continue
+                    }
 
                     // check run condition, for each run condition it has, if one is not met break.
                     if (toEx.runConditions
@@ -133,7 +136,7 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
                         toEx.consoleCommands.forEach { command ->
                             server.dispatchCommand(server.consoleSender,
                                     processString(MessageFormat.format(command, *args.toTypedArray()), player)
-                                            .replace("%alias%", argOne))
+                                            .replace("%alias%", args[0]))
                         }
                     } else if (noPermission.isNotEmpty()) {
                         // if let run if no permission, uncancel + disregard
@@ -155,7 +158,7 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
         // Start metrics
         Metrics(this, 1242)
 
-        log("CommandAlias V.${description.version}, by Ellie#0006, has been enabled!")
+        log("CommandAlias v${description.version}, by Ellie#0006, has been enabled!")
     }
 
     override fun onDisable() {
@@ -163,7 +166,7 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
         hookProcessors.clear()
         runConditions.clear()
 
-        log("CommandAlias V.${description.version}, by Ellie#0006, has been disabled!")
+        log("CommandAlias v${description.version}, by Ellie#0006, has been disabled!")
     }
 
     fun log(message: String, level: Level = Level.INFO) = logger.log(level, message)
