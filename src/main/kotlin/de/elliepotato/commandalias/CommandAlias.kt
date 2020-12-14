@@ -100,9 +100,12 @@ class CommandAlias : JavaPlugin(), CommandAliasAPI {
                 val args = message.split(" ");
 
                 for ((key, toEx) in commands) {
+                    // print("check " + key + " " + toEx.aliases)
                     // Check enabled and either it is equal to the label or the alias contains it
-                    if (!toEx.enabled || (key != messageLower && (!toEx.aliases.contains(args[0].toLowerCase()) && !toEx.aliases.contains(messageLower))))
+                    if (!toEx.enabled || (key != messageLower && (!toEx.aliases.contains(args[0].toLowerCase()) && !toEx.aliases.contains(messageLower)))) {
+                        // print(key + " ignore " + toEx.aliases)
                         continue
+                    }
 
                     // check run condition, for each run condition it has, if one is not met break.
                     if (toEx.runConditions

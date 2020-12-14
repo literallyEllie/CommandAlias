@@ -65,12 +65,18 @@ class AliasCommand(val label: String, var enabled: Boolean, val permission: Stri
             maxArg = max(maxArg, data.second)
         }
 
+        // append trailing post-placeholder args
+        val lastIndex = placeholderIndexes[maxArg - 1].first
+        if (lastIndex + 3 < label.length)
+            build.append(label.substring(lastIndex + 3))
+
         // max arg will be +1 than args.size
         // do not want to append 0 arg as that is the command label.
         if (args.size > 1 && maxArg < args.size) {
             // append " " to avoid conjoining args + not breaking command if no args.
             if (build.isNotEmpty())
                 build.append(" ")
+
             build.append(Joiner.on(" ").join(args.subList(max(maxArg + 1, 1), args.size)))
         }
 
