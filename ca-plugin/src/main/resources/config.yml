@@ -1,0 +1,42 @@
+aliases:
+  # Original command
+  "gamemode creative":
+    aliases:
+      - 'poggerpower'
+      - 'i am stupid'
+    enabled: true
+    type: COMMAND # fall-back
+    matchPriority: NORMAL
+    condition: # Jsonnnnn
+      permission:
+        requiredPermission: "yamama"
+        noPermissionMessage: "No permission, bitch"
+      inWorld: "world"
+    also: # post processors
+      onSuccess:
+        consoleCommand:
+          - "a"
+          - "b"
+        playerMessage:
+          - "/say im a silly goose"
+      onFail:
+        consoleCommand:
+          - "say error!"
+    # Alias settings
+    settings:
+      breakAfterRun: true
+  # Message command
+  "rules":
+    aliases:
+      - 'rules please'
+      - 'rules...'
+    messages:
+      - "Here are the rules..."
+    type: MESSAGE # (implicit)
+  # Server transfer
+  "eggwars":
+    aliases:
+      - 'eggtime'
+    targetServer: # can also be single value
+      - "eggwars1"
+    type: SERVER_TRANSFER # (implicit)
