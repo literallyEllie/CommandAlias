@@ -1,39 +1,40 @@
 package de.eliepotato.commandalias.api.alias.builder;
 
+import de.eliepotato.commandalias.api.action.AliasAction;
 import de.eliepotato.commandalias.api.alias.AliasType;
 import de.eliepotato.commandalias.api.alias.CommandAlias;
 import de.eliepotato.commandalias.api.executor.context.ExecutionContext;
 import de.eliepotato.commandalias.api.hook.PostprocessorHook;
 import de.eliepotato.commandalias.api.hook.AliasRunCondition;
 import de.eliepotato.commandalias.api.util.AliasPriority;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
-public final class BuiltCommandAlias implements CommandAlias {
+/**
+ * Simple command alias implementation for the lads.
+ */
+public final class SimpleCommandAlias implements CommandAlias {
     private final String label;
     private final Set<String> aliases;
+    private final List<AliasAction> actions;
     private boolean enabled;
     private AliasType type;
     private AliasPriority matchPriority;
-    private final Function<ExecutionContext, Boolean> aliasFunction;
     private final List<AliasRunCondition> aliasRunConditions;
     private final List<PostprocessorHook> postprocessorHooks;
     private final Map<String, Boolean> settings;
 
-    public BuiltCommandAlias(
-            String label, Set<String> aliases,
-            @Nullable Function<ExecutionContext, Boolean> aliasFunction,
+    public SimpleCommandAlias(
+            String label, Set<String> aliases, List<AliasAction> actions,
             List<AliasRunCondition> aliasRunConditions,
             List<PostprocessorHook> postprocessorHooks,
             Map<String, Boolean> settings
     ) {
         this.label = label;
         this.aliases = aliases;
-        this.aliasFunction = aliasFunction;
+        this.actions = actions;
         this.aliasRunConditions = aliasRunConditions;
         this.postprocessorHooks = postprocessorHooks;
         this.settings = settings;
@@ -47,6 +48,11 @@ public final class BuiltCommandAlias implements CommandAlias {
     @Override
     public Set<String> getAliases() {
         return aliases;
+    }
+
+    @Override
+    public List<AliasAction> getActions() {
+        return actions;
     }
 
     @Override
@@ -80,7 +86,7 @@ public final class BuiltCommandAlias implements CommandAlias {
     }
 
     @Override
-    public List<AliasRunCondition> getPreprocessorHooks() {
+    public List<AliasRunCondition> getRunConditions() {
         return aliasRunConditions;
     }
 
@@ -91,11 +97,13 @@ public final class BuiltCommandAlias implements CommandAlias {
 
     @Override
     public boolean execute(ExecutionContext context) {
-        if (aliasFunction != null) {
-            return aliasFunction.apply(context);
+        boolean success = false;
+
+        for (AliasAction action : actions) {
+            success = action.run(this, context);
         }
 
-        return true;
+        return success;
     }
 
     @Override

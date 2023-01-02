@@ -1,5 +1,6 @@
 package de.eliepotato.commandalias.api.alias;
 
+import de.eliepotato.commandalias.api.action.AliasAction;
 import de.eliepotato.commandalias.api.executor.context.ExecutionContext;
 import de.eliepotato.commandalias.api.hook.PostprocessorHook;
 import de.eliepotato.commandalias.api.hook.AliasRunCondition;
@@ -16,6 +17,8 @@ public interface CommandAlias extends Comparable<CommandAlias> {
 
     Set<String> getAliases();
 
+    List<AliasAction> getActions();
+
     boolean isEnabled();
 
     void setEnabled(boolean enabled);
@@ -28,7 +31,7 @@ public interface CommandAlias extends Comparable<CommandAlias> {
 
     void setMatchPriority(AliasPriority newPriority);
 
-    List<AliasRunCondition> getPreprocessorHooks();
+    List<AliasRunCondition> getRunConditions();
 
     List<PostprocessorHook> getPostprocessorHooks();
 

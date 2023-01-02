@@ -34,7 +34,7 @@ public class AliasExecutorImpl implements AliasExecutor {
             return false;
         }
 
-        List<AliasRunCondition> aliasRunConditions = alias.getPreprocessorHooks();
+        List<AliasRunCondition> aliasRunConditions = alias.getRunConditions();
         logger.debug(
                 "Alias {} has {} pre-processor hooks",
                 alias.getLabel(), aliasRunConditions.size()

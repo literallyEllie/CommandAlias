@@ -1,14 +1,12 @@
 package de.eliepotato.commandalias.api.alias.builder;
 
-import de.eliepotato.commandalias.api.alias.AliasType;
+import de.eliepotato.commandalias.api.action.AliasAction;
 import de.eliepotato.commandalias.api.alias.CommandAlias;
-import de.eliepotato.commandalias.api.executor.context.ExecutionContext;
 import de.eliepotato.commandalias.api.util.AliasPriority;
 import de.eliepotato.commandalias.api.hook.PostprocessorHook;
 import de.eliepotato.commandalias.api.hook.AliasRunCondition;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Builder to create a simple command alias.
@@ -21,9 +19,8 @@ public final class AliasBuilder {
 
     private String label;
     private final Set<String> aliases;
-    private AliasType type;
+    private final List<AliasAction> actions;
     private AliasPriority matchPriority;
-    private Function<ExecutionContext, Boolean> aliasFunction;
     private final List<AliasRunCondition> aliasRunConditions;
     private final List<PostprocessorHook> postprocessorHooks;
     private final Map<String, Boolean> settings;
@@ -32,6 +29,7 @@ public final class AliasBuilder {
 
     private AliasBuilder() {
         this.aliases = new HashSet<>();
+        this.actions = new LinkedList<>();
         this.aliasRunConditions = new ArrayList<>();
         this.postprocessorHooks = new ArrayList<>();
         this.settings = new HashMap<>();
@@ -62,15 +60,13 @@ public final class AliasBuilder {
     }
 
     /**
-     * Set the alias type.
-     * </p>
-     * This can generally change during runtime.
+     * Another action to run in additional to this.
      *
-     * @param type Type to set.
+     * @param action Action to run.
      * @return Builder instance.
      */
-    public AliasBuilder type(AliasType type) {
-        this.type = type;
+    public AliasBuilder andDoAction(AliasAction action) {
+        this.actions.add(action);
         return this;
     }
 
@@ -85,19 +81,6 @@ public final class AliasBuilder {
      */
     public AliasBuilder matchPriority(AliasPriority matchPriority) {
         this.matchPriority = matchPriority;
-        return this;
-    }
-
-    /**
-     * Set an alias function.
-     * </p>
-     * This will run when the alias is triggered.
-     *
-     * @param aliasFunction Function to run when triggered.
-     * @return Builder instance.
-     */
-    public AliasBuilder aliasFunction(Function<ExecutionContext, Boolean> aliasFunction) {
-        this.aliasFunction = aliasFunction;
         return this;
     }
 
@@ -124,10 +107,9 @@ public final class AliasBuilder {
     }
 
     public CommandAlias build() {
-        BuiltCommandAlias commandAlias = new BuiltCommandAlias(
-                label, aliases, aliasFunction, aliasRunConditions, postprocessorHooks, settings
+        SimpleCommandAlias commandAlias = new SimpleCommandAlias(
+                label, aliases, actions, aliasRunConditions, postprocessorHooks, settings
         );
-        commandAlias.setType(type);
         commandAlias.setMatchPriority(matchPriority);
 
         return commandAlias;
