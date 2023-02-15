@@ -1,6 +1,8 @@
 # CommandAlias
 The source for an easy to setup, lightweight plugin for your Spigot server written in Kotlin. [Resource Page](https://www.spigotmc.org/resources/commandalias.44362/)
 
+**The current version is no longer being maintained, [v2](https://github.com/literallyEllie/CommandAlias/tree/v2) is underconstruction!**
+
 ## Developer API
 Since 1.5-RELEASE, there is real support for API usage. This API can be used for
 - (Un)registering aliases, run conditions, placeholders
